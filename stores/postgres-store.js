@@ -248,6 +248,45 @@ export class PostgresStore {
     return mapApplication(result.rows[0]);
   }
 
+  async deleteApplication(id) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const targetResult = await client.query(`
+        SELECT a.id, a.reference, a.applicant_id, a.consent_id
+        FROM applications a JOIN applicants p ON p.id=a.applicant_id
+        WHERE a.id=$1 FOR UPDATE OF a, p`, [id]);
+      const target = targetResult.rows[0];
+      if (!target) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      await client.query('DELETE FROM applications WHERE id=$1', [target.id]);
+      const consentResult = target.consent_id
+        ? await client.query('DELETE FROM consents WHERE id=$1 RETURNING id', [target.consent_id])
+        : { rowCount: 0 };
+      const applicantResult = await client.query(`
+        DELETE FROM applicants p
+        WHERE p.id=$1 AND NOT EXISTS (
+          SELECT 1 FROM applications a WHERE a.applicant_id=p.id
+        ) RETURNING id`, [target.applicant_id]);
+
+      await client.query('COMMIT');
+      return {
+        id: target.id,
+        reference: target.reference,
+        deletedApplicant: applicantResult.rowCount > 0,
+        deletedConsent: consentResult.rowCount > 0
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async updateApplicationStatus(id, status) {
     const client = await this.pool.connect();
     try {

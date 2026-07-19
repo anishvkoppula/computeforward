@@ -61,3 +61,24 @@ test('duplicate student and guardian addresses receive only one copy', async () 
   });
   assert.deepEqual(delivered.to, ['family@example.test']);
 });
+
+test('internal application alert goes only to the configured organization inbox', async () => {
+  let delivered;
+  const config = {
+    publicOrigin: 'https://example.test',
+    admissionsEmails: ['computeforward123@gmail.com'],
+    smtp: { host: 'smtp.example.test', port: 587, secure: false, user: 'u', pass: 'p', from: 'from@example.test' }
+  };
+  const mailer = createMailer(config, {
+    createTransport: () => ({ async sendMail(options) { delivered = options; }, async verify() { return true; } })
+  });
+
+  await mailer.sendAdmissionsNotification({
+    reference: 'CF-TEST-ALERT',
+    level: 'Level 3 — Algorithms & Competitive Programming'
+  });
+
+  assert.deepEqual(delivered.to, ['computeforward123@gmail.com']);
+  assert.match(delivered.html, /computeforward123@gmail\.com/);
+  assert.doesNotMatch(delivered.html, /anishkoppula@gmail\.com|kaushik\.atla@gmail\.com/);
+});

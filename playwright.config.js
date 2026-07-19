@@ -10,7 +10,7 @@ export default defineConfig({
     trace: 'retain-on-failure'
   },
   webServer: {
-    command: 'PORT=3217 PUBLIC_ORIGIN=http://127.0.0.1:3217 DATA_DIR=/private/tmp/computeforward-e2e DATABASE_URL= ADMIN_TOKEN=e2e-admin-token-that-is-longer-than-thirty-two-characters npm start',
+    command: 'PORT=3217 PUBLIC_ORIGIN=http://127.0.0.1:3217 DATA_DIR=/private/tmp/computeforward-e2e DATABASE_URL= GLOBAL_RATE_LIMIT=1000 ADMIN_TOKEN=e2e-admin-token-that-is-longer-than-thirty-two-characters npm start',
     url: 'http://127.0.0.1:3217/healthz',
     reuseExistingServer: false,
     timeout: 30_000

@@ -63,7 +63,7 @@ export function createApp({ store, mailer, config }) {
   app.use(express.json({ limit: '24kb', strict: true }));
   app.use(express.urlencoded({ limit: '24kb', extended: false, parameterLimit: 40 }));
 
-  const globalLimiter = limiter({ windowMs: 15 * 60_000, limit: 200, message: 'Too many requests. Please wait and try again.' });
+  const globalLimiter = limiter({ windowMs: 15 * 60_000, limit: config.globalRateLimit, message: 'Too many requests. Please wait and try again.' });
   const applyLimiter = limiter({ windowMs: 60 * 60_000, limit: config.applicationRateLimit, message: 'Too many application attempts. Please wait before trying again.' });
   const adminLimiter = limiter({ windowMs: 15 * 60_000, limit: config.adminRateLimit, message: 'Too many admin requests.' });
   const deletionLimiter = limiter({ windowMs: 60 * 60_000, limit: config.deletionRateLimit, message: 'Too many privacy requests. Please wait before trying again.' });
@@ -315,6 +315,15 @@ export function createApp({ store, mailer, config }) {
     if (!application) return res.status(404).json({ success: false, error: 'Application not found.' });
     await store.recordAudit({ actor: 'admin', action: 'status_changed', targetType: 'application', targetId: id, requestId: req.requestId });
     res.json({ success: true, application });
+  }));
+  app.delete('/api/admin/applications/:id', verifyOrigin, asyncRoute(async (req, res) => {
+    const id = validateId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid application.' });
+    const deleted = await store.deleteApplication(id);
+    if (!deleted) return res.status(404).json({ success: false, error: 'Application not found.' });
+    await store.recordAudit({ actor: 'admin', action: 'application_deleted', targetType: 'application', targetId: id, requestId: req.requestId });
+    logger.info('admin_application_deleted', { requestId: req.requestId, status: 200 });
+    res.json({ success: true, deleted });
   }));
   app.post('/api/admin/applications/:id/resend-confirmation', asyncRoute(async (req, res) => {
     const id = validateId(req.params.id);

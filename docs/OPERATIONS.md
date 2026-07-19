@@ -11,6 +11,8 @@ Last updated: 2026-07-17
 5. Aim to respond within 48 hours. If the commitment cannot be maintained, change the public copy before accepting more applications.
 6. Lock the dashboard when finished; closing the tab clears its session token.
 
+The dashboard's **Delete permanently** action is for confirmed test, spam, duplicate, or otherwise unnecessary individual applications. Read the confirmation carefully: the application and consent are erased immediately, and an applicant contact record is also erased when it has no other applications. This action cannot be undone. For a student or guardian privacy request, use the verified email-deletion workflow below so the request has the proper confirmation record.
+
 ## Application incident
 
 Treat these as launch-blocking incidents:

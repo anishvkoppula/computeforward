@@ -39,6 +39,7 @@ export const config = Object.freeze({
   },
   alertWebhookUrl: process.env.ALERT_WEBHOOK_URL || '',
   program: PROGRAM,
+  globalRateLimit: integerFromEnv('GLOBAL_RATE_LIMIT', 200),
   applicationRateLimit: integerFromEnv('APPLICATION_RATE_LIMIT', 5),
   adminRateLimit: integerFromEnv('ADMIN_RATE_LIMIT', 60),
   deletionRateLimit: integerFromEnv('DELETION_RATE_LIMIT', 3),

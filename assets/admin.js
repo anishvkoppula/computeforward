@@ -151,10 +151,14 @@ function renderApplications() {
     row.append(cell(application.confirmationStatus));
     row.append(cell(new Date(application.submittedAt).toLocaleString()));
     const actionCell = document.createElement('td');
+    actionCell.className = 'application-actions';
     const resend = document.createElement('button');
     resend.type = 'button'; resend.className = 'button button-secondary button-small'; resend.textContent = 'Resend email';
     resend.addEventListener('click', () => resendConfirmation(application.id, resend));
-    actionCell.append(resend); row.append(actionCell);
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'button button-danger button-small'; remove.textContent = 'Delete permanently';
+    remove.addEventListener('click', () => deleteApplication(application, remove));
+    actionCell.append(resend, remove); row.append(actionCell);
     rows.append(row);
   }
   if (!rows.children.length) {
@@ -248,6 +252,29 @@ async function resendConfirmation(id, button) {
   try { const result = await api(`/api/admin/applications/${id}/resend-confirmation`, { method: 'POST', body: '{}' }); dashboardStatus.textContent = result.success ? 'Confirmation sent.' : 'Email is still pending; check SMTP and monitoring.'; await loadDashboard(); }
   catch (error) { dashboardStatus.textContent = error.message; dashboardStatus.className = 'form-status error'; }
   finally { button.disabled = false; }
+}
+
+async function deleteApplication(application, button) {
+  const confirmed = window.confirm(
+    `Permanently delete ${application.reference}?\n\n` +
+    'This removes the application, its answers, and its consent record. If this is the student’s only application, their student and guardian contact record is also removed. This cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  button.disabled = true;
+  dashboardStatus.className = 'form-status';
+  dashboardStatus.textContent = `Deleting ${application.reference}…`;
+  try {
+    const result = await api(`/api/admin/applications/${encodeURIComponent(application.id)}`, { method: 'DELETE' });
+    await loadDashboard();
+    dashboardStatus.className = 'form-status success';
+    dashboardStatus.textContent = `${result.deleted.reference} was permanently deleted.`;
+  } catch (error) {
+    dashboardStatus.textContent = error.message;
+    dashboardStatus.className = 'form-status error';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 loginForm.addEventListener('submit', async event => {

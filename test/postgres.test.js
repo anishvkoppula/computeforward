@@ -78,6 +78,31 @@ test('PostgreSQL adapter enforces cohort capacity during status changes', async 
   await store.pool.query("UPDATE cohorts SET seat_limit=NULL WHERE slug='interest-2026'");
 });
 
+test('PostgreSQL admin deletion removes one application subtree without harming siblings', async () => {
+  const sibling = await store.createApplication(application({
+    id: crypto.randomUUID(),
+    reference: 'CF-TEST-SAME-APPLICANT-SIBLING',
+    level: 'Level 2 — Applied AI & Machine Learning'
+  }));
+  assert.equal(sibling.created, true);
+  const siblingDeletion = await store.deleteApplication(sibling.application.id);
+  assert.equal(siblingDeletion.deletedConsent, true);
+  assert.equal(siblingDeletion.deletedApplicant, false);
+  assert.ok((await store.listApplications()).some(item => item.applicant.name === 'Postgres Applicant'));
+
+  const onlyApplication = await store.createApplication(application({
+    id: crypto.randomUUID(),
+    reference: 'CF-TEST-ONLY-APPLICATION',
+    name: 'Delete Only Applicant',
+    email: 'delete-only@example.com'
+  }));
+  const orphanDeletion = await store.deleteApplication(onlyApplication.application.id);
+  assert.equal(orphanDeletion.deletedConsent, true);
+  assert.equal(orphanDeletion.deletedApplicant, true);
+  const applicantCount = await store.pool.query("SELECT count(*)::int AS count FROM applicants WHERE email='delete-only@example.com'");
+  assert.equal(applicantCount.rows[0].count, 0);
+});
+
 test('PostgreSQL deletion verification removes every matching family record', async () => {
   await store.createDeletionRequest({
     email: 'postgres@example.com',

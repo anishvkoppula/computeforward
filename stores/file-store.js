@@ -289,6 +289,29 @@ export class FileStore {
     return application ? this.join(state, application) : null;
   }
 
+  async deleteApplication(id) {
+    return this.mutate(state => {
+      const application = state.applications.find(item => item.id === id);
+      if (!application) return null;
+      const consentCount = state.consents.length;
+      state.applications = state.applications.filter(item => item.id !== id);
+      state.consents = state.consents.filter(consent => consent.id !== application.consentId);
+
+      const applicantHasOtherApplications = state.applications.some(item => item.applicantId === application.applicantId);
+      if (!applicantHasOtherApplications) {
+        state.applicants = state.applicants.filter(applicant => applicant.id !== application.applicantId);
+        state.consents = state.consents.filter(consent => consent.applicantId !== application.applicantId);
+      }
+
+      return {
+        id: application.id,
+        reference: application.reference,
+        deletedApplicant: !applicantHasOtherApplications,
+        deletedConsent: state.consents.length < consentCount
+      };
+    });
+  }
+
   async updateApplicationStatus(id, status) {
     return this.mutate(state => {
       const application = state.applications.find(item => item.id === id);

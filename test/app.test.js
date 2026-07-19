@@ -269,6 +269,48 @@ test('allows authorized status changes and records metrics', async () => {
   assert.equal(metricBody.metrics.byCohort['interest-2026'], 2);
 });
 
+test('admin can permanently delete one application and its orphaned personal records', async () => {
+  const createdResponse = await request('/api/apply', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      ...validApplication,
+      name: 'Admin Deletion Test',
+      email: 'admin-delete@example.com',
+      level: 'Level 4 — Passion Project & Research'
+    })
+  });
+  assert.equal(createdResponse.status, 201);
+  const createdBody = await createdResponse.json();
+  const application = (await store.listApplications()).find(item => item.reference === createdBody.reference);
+  assert.ok(application);
+
+  const unauthorized = await request(`/api/admin/applications/${application.id}`, { method: 'DELETE' });
+  assert.equal(unauthorized.status, 401);
+
+  const response = await request(`/api/admin/applications/${application.id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-token': testConfig.adminToken }
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.deleted.reference, application.reference);
+  assert.equal(result.deleted.deletedApplicant, true);
+  assert.equal(result.deleted.deletedConsent, true);
+
+  const state = await store.read();
+  assert.equal(state.applications.some(item => item.id === application.id), false);
+  assert.equal(state.applicants.some(item => item.email === 'admin-delete@example.com'), false);
+  assert.equal(state.consents.some(item => item.id === application.consent.id), false);
+  assert.ok(state.auditEvents.some(event => event.action === 'application_deleted' && event.targetId === application.id));
+
+  const missing = await request(`/api/admin/applications/${application.id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-token': testConfig.adminToken }
+  });
+  assert.equal(missing.status, 404);
+});
+
 test('uses email verification before deleting matching records', async () => {
   const start = await request('/api/privacy/deletion-requests', {
     method: 'POST',
