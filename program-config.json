@@ -1,0 +1,63 @@
+{
+  "organization": {
+    "name": "Compute Forward",
+    "founders": ["Anish Koppula", "Kaushik Atla"],
+    "contactEmails": ["anishkoppula@gmail.com", "kaushik.atla@gmail.com"],
+    "cost": "Free at every stage"
+  },
+  "currentCohort": {
+    "slug": "interest-2026",
+    "name": "Next Cohort Interest List",
+    "status": "interest-list",
+    "applicationsOpen": true,
+    "startDate": null,
+    "endDate": null,
+    "applicationDeadline": null,
+    "meetingSchedule": "Published before enrollment offers are accepted",
+    "timezone": "Published with the cohort schedule",
+    "weeklyWorkload": "Varies by level and is confirmed before enrollment",
+    "deliveryFormat": "Online, cohort-based learning",
+    "seatLimit": null,
+    "costCents": 0,
+    "statusMessage": "Interest applications are open. Dates, meeting times, workload, and capacity will be published before any enrollment offer must be accepted."
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "value": "Level 1 — Python Foundations",
+      "title": "Python Foundations",
+      "duration": "8 weeks",
+      "audience": "Absolute beginners; no prior experience required",
+      "goal": "Master Python and computational thinking while building real projects."
+    },
+    {
+      "id": "level-2",
+      "value": "Level 2 — Applied AI & Machine Learning",
+      "title": "Applied AI & Machine Learning",
+      "duration": "8 weeks",
+      "audience": "Students who completed Level 1 or have baseline Python proficiency",
+      "goal": "Build applied projects with NumPy, pandas, scikit-learn, and an introduction to neural networks."
+    },
+    {
+      "id": "level-3",
+      "value": "Level 3 — Algorithms & Competitive Programming",
+      "title": "Algorithms & Competitive Programming",
+      "duration": "10 weeks",
+      "audience": "Intermediate to advanced students preparing for USACO Bronze through Silver",
+      "goal": "Learn core data structures, algorithmic patterns, contest strategy, and structured problem solving."
+    },
+    {
+      "id": "level-4",
+      "value": "Level 4 — Passion Project & Research",
+      "title": "Passion Project & Research",
+      "duration": "Ongoing, mentor-guided",
+      "audience": "Students who completed prior levels or demonstrate strong independent readiness",
+      "goal": "Create a portfolio-grade AI application, research paper, startup prototype, or technical tool."
+    }
+  ],
+  "policyVersions": {
+    "privacy": "2026-07-18",
+    "terms": "2026-07-17",
+    "safety": "2026-07-17"
+  }
+}

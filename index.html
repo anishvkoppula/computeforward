@@ -1,1188 +1,375 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ComputeForward — Elite CS Education for the Next Generation</title>
-<meta name="description" content="A rigorous, student-led CS program that takes you from zero to competition-ready.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500;600;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg-primary: #07070b;
-    --bg-secondary: #0c0c12;
-    --bg-card: #101019;
-    --bg-card-hover: #15151f;
-    --accent: #00e0ff;
-    --accent-2: #7b61ff;
-    --accent-3: #00ffa3;
-    --accent-warm: #ffb347;
-    --text-primary: #ecedf3;
-    --text-secondary: #8c8da0;
-    --text-muted: #4f5066;
-    --border: #1c1c2a;
-    --border-bright: #2a2a3e;
-    --glow: rgba(0, 224, 255, 0.18);
-    --max: 1180px;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html {
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent) var(--bg-primary);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  body {
-    font-family: 'Sora', sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    overflow-x: hidden;
-    line-height: 1.7;
-    position: relative;
-  }
-
-  /* grain overlay */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.035;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  ::selection { background: var(--accent); color: var(--bg-primary); }
-
-  h1, h2, h3, .nav-logo, .section-title, .impact-num {
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
-
-  /* ── NAV ── */
-  nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    padding: 1.1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    backdrop-filter: blur(22px) saturate(140%);
-    background: rgba(7, 7, 11, 0.6);
-    border-bottom: 1px solid transparent;
-    transition: padding 0.35s ease, background 0.35s ease, border-color 0.35s ease;
-  }
-
-  nav.scrolled {
-    padding: 0.65rem 2rem;
-    background: rgba(7, 7, 11, 0.85);
-    border-bottom: 1px solid rgba(28, 28, 42, 0.7);
-  }
-
-  .nav-logo {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--text-primary);
-    text-decoration: none;
-    letter-spacing: -0.5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-  }
-
-  .nav-logo::before {
-    content: '';
-    width: 9px; height: 9px;
-    border-radius: 2px;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
-    transform: rotate(45deg);
-  }
-
-  .nav-logo span { color: var(--accent); }
-
-  .nav-links { display: flex; gap: 2.2rem; align-items: center; }
-
-  .nav-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 500;
-    transition: color 0.2s;
-    letter-spacing: 0.2px;
-    position: relative;
-  }
-
-  .nav-links a:not(.nav-cta)::after {
-    content: '';
-    position: absolute;
-    left: 0; bottom: -4px;
-    width: 0; height: 1px;
-    background: var(--accent);
-    transition: width 0.25s ease;
-  }
-
-  .nav-links a:not(.nav-cta):hover { color: var(--text-primary); }
-  .nav-links a:not(.nav-cta):hover::after { width: 100%; }
-
-  .nav-cta {
-    background: var(--accent) !important;
-    color: var(--bg-primary) !important;
-    padding: 0.5rem 1.2rem;
-    border-radius: 7px;
-    font-weight: 600 !important;
-    transition: all 0.2s !important;
-  }
-
-  .nav-cta:hover {
-    box-shadow: 0 0 22px var(--glow);
-    transform: translateY(-1px);
-  }
-
-  .hamburger {
-    display: none;
-    flex-direction: column;
-    gap: 5px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 4px;
-  }
-
-  .hamburger span {
-    width: 24px; height: 2px;
-    background: var(--text-primary);
-    transition: all 0.3s;
-    border-radius: 2px;
-  }
-
-  .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-  .hamburger.active span:nth-child(2) { opacity: 0; }
-  .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-
-  /* ── HERO ── */
-  .hero {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 9rem 2rem 4rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background:
-      radial-gradient(ellipse 600px 420px at 28% 18%, rgba(0, 224, 255, 0.10) 0%, transparent 65%),
-      radial-gradient(ellipse 520px 360px at 74% 58%, rgba(123, 97, 255, 0.09) 0%, transparent 65%),
-      radial-gradient(ellipse 440px 320px at 50% 88%, rgba(0, 255, 163, 0.05) 0%, transparent 65%);
-    animation: drift 24s ease-in-out infinite;
-    z-index: 0;
-  }
-
-  @keyframes drift {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(34px, -22px) rotate(1deg); }
-    66% { transform: translate(-24px, 18px) rotate(-1deg); }
-  }
-
-  .hero-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(40, 40, 60, 0.28) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(40, 40, 60, 0.28) 1px, transparent 1px);
-    background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 72% 62% at 50% 46%, black 18%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 72% 62% at 50% 46%, black 18%, transparent 100%);
-    z-index: 0;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.42rem 1rem;
-    border: 1px solid var(--border-bright);
-    border-radius: 100px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 2.2rem;
-    background: rgba(12, 12, 18, 0.7);
-    position: relative;
-    z-index: 1;
-    animation: fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) both;
-  }
-
-  .hero-badge .dot {
-    width: 6px; height: 6px;
-    background: var(--accent-3);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent-3);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-
-  .hero h1 {
-    font-size: clamp(3rem, 8.4vw, 6.8rem);
-    font-weight: 700;
-    line-height: 1.02;
-    letter-spacing: -3px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .hero h1 .line { display: block; overflow: hidden; }
-  .hero h1 .line > span {
-    display: inline-block;
-    animation: maskUp 1s cubic-bezier(0.16,1,0.3,1) both;
-  }
-  .hero h1 .line:nth-child(1) > span { animation-delay: 0.12s; }
-  .hero h1 .line:nth-child(2) > span { animation-delay: 0.24s; }
-
-  @keyframes maskUp {
-    from { transform: translateY(105%); }
-    to { transform: translateY(0); }
-  }
-
-  .hero h1 .gradient {
-    background: linear-gradient(110deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-sub {
-    font-size: clamp(1rem, 2vw, 1.22rem);
-    color: var(--text-secondary);
-    max-width: 620px;
-    margin: 1.6rem auto 2.6rem;
-    font-weight: 300;
-    position: relative;
-    z-index: 1;
-    animation: fadeUp 0.9s ease 0.4s both;
-  }
-
-  .hero-buttons {
-    display: flex;
-    gap: 1rem;
-    position: relative;
-    z-index: 1;
-    animation: fadeUp 0.9s ease 0.5s both;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .btn-primary {
-    padding: 0.9rem 2rem;
-    background: var(--accent);
-    color: var(--bg-primary);
-    border: none;
-    border-radius: 9px;
-    font-family: 'Sora', sans-serif;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.25s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(110deg, transparent, rgba(255,255,255,0.35), transparent);
-    transform: translateX(-120%);
-    transition: transform 0.6s ease;
-  }
-
-  .btn-primary:hover {
-    box-shadow: 0 0 34px rgba(0, 224, 255, 0.35);
-    transform: translateY(-2px);
-  }
-  .btn-primary:hover::before { transform: translateX(120%); }
-
-  .btn-primary:disabled {
-    opacity: 0.6; cursor: not-allowed;
-    transform: none !important; box-shadow: none !important;
-  }
-
-  .btn-secondary {
-    padding: 0.9rem 2rem;
-    background: rgba(255,255,255,0.02);
-    color: var(--text-primary);
-    border: 1px solid var(--border-bright);
-    border-radius: 9px;
-    font-family: 'Sora', sans-serif;
-    font-weight: 500;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.25s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translateY(-2px);
-    background: rgba(0, 224, 255, 0.04);
-  }
-
-  .hero-founder {
-    margin-top: 3.2rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    position: relative;
-    z-index: 1;
-    animation: fadeUp 0.9s ease 0.6s both;
-  }
-
-  .hero-founder strong { color: var(--text-secondary); font-weight: 600; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(22px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── SECTIONS ── */
-  section {
-    padding: 7rem 2rem;
-    max-width: var(--max);
-    margin: 0 auto;
-  }
-
-  .section-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--accent);
-    margin-bottom: 1.1rem;
-    display: inline-block;
-  }
-
-  .section-title {
-    font-size: clamp(2rem, 4.2vw, 3.2rem);
-    font-weight: 700;
-    letter-spacing: -1.5px;
-    margin-bottom: 1.1rem;
-    line-height: 1.08;
-  }
-
-  .section-desc {
-    color: var(--text-secondary);
-    max-width: 600px;
-    font-size: 1.05rem;
-    font-weight: 300;
-    margin-bottom: 3rem;
-  }
-
-  /* ── ABOUT ── */
-  .about-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.4rem;
-    margin-top: 2rem;
-  }
-
-  .about-card {
-    padding: 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), border-color 0.35s, background 0.35s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .about-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s ease;
-  }
-
-  .about-card:hover {
-    border-color: var(--border-bright);
-    background: var(--bg-card-hover);
-    transform: translateY(-4px);
-  }
-  .about-card:hover::before { transform: scaleX(1); }
-
-  .about-icon {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, rgba(0,224,255,0.12), rgba(123,97,255,0.10));
-    border: 1px solid var(--border-bright);
-    border-radius: 11px;
-    font-size: 1.25rem;
-    margin-bottom: 1.3rem;
-  }
-
-  .about-card h3 { font-size: 1.12rem; font-weight: 600; margin-bottom: 0.6rem; letter-spacing: -0.3px; }
-  .about-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.65; }
-
-  /* ── PROGRAMS ── */
-  .programs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.4rem;
-  }
-
-  .program-card {
-    padding: 2.4rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), border-color 0.4s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .program-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(0,224,255,0.06), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.4s;
-    pointer-events: none;
-  }
-
-  .program-card:hover { transform: translateY(-6px); border-color: var(--border-bright); }
-  .program-card:hover::after { opacity: 1; }
-
-  .program-card .level-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.64rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 0.32rem 0.8rem;
-    border-radius: 5px;
-    display: inline-block;
-    margin-bottom: 1.3rem;
-    font-weight: 500;
-  }
-
-  .program-card:nth-child(1) .level-tag { background: rgba(0,255,163,0.1); color: var(--accent-3); border: 1px solid rgba(0,255,163,0.2); }
-  .program-card:nth-child(2) .level-tag { background: rgba(0,224,255,0.1); color: var(--accent); border: 1px solid rgba(0,224,255,0.2); }
-  .program-card:nth-child(3) .level-tag { background: rgba(123,97,255,0.1); color: var(--accent-2); border: 1px solid rgba(123,97,255,0.2); }
-
-  .program-card h3 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
-  .program-card .duration { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem; font-family: 'JetBrains Mono', monospace; }
-  .program-card p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.65; }
-
-  .program-topics { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-  .program-topics li {
-    font-size: 0.74rem; padding: 0.32rem 0.7rem;
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 5px; color: var(--text-secondary);
-    font-family: 'JetBrains Mono', monospace;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .program-card:hover .program-topics li { border-color: rgba(255,255,255,0.1); }
-
-  /* ── IMPACT ── */
-  .impact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.4rem;
-  }
-
-  .impact-card {
-    padding: 2.6rem 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    text-align: center;
-    transition: border-color 0.3s, transform 0.3s;
-  }
-  .impact-card:hover { border-color: var(--border-bright); transform: translateY(-4px); }
-
-  .impact-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 2.9rem; font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; line-height: 1.2;
-  }
-
-  .impact-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; }
-
-  /* ── TESTIMONIALS ── */
-  .testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.4rem;
-  }
-
-  .testimonial-card {
-    padding: 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    transition: border-color 0.3s, transform 0.3s;
-    position: relative;
-  }
-  .testimonial-card::before {
-    content: '\201C';
-    position: absolute;
-    top: 0.4rem; right: 1.2rem;
-    font-family: 'Bricolage Grotesque', serif;
-    font-size: 4rem;
-    color: var(--border-bright);
-    line-height: 1;
-  }
-  .testimonial-card:hover { border-color: var(--border-bright); transform: translateY(-3px); }
-
-  .testimonial-quote {
-    font-size: 0.95rem; color: var(--text-secondary); font-style: italic;
-    line-height: 1.7; margin-bottom: 1.5rem;
-    padding-left: 1.2rem; border-left: 2px solid var(--accent-2);
-    position: relative; z-index: 1;
-  }
-
-  .testimonial-author { display: flex; align-items: center; gap: 0.8rem; }
-
-  .testimonial-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .testimonial-card:nth-child(1) .testimonial-avatar { background: rgba(0,255,163,0.15); color: var(--accent-3); }
-  .testimonial-card:nth-child(2) .testimonial-avatar { background: rgba(0,224,255,0.15); color: var(--accent); }
-  .testimonial-card:nth-child(3) .testimonial-avatar { background: rgba(123,97,255,0.15); color: var(--accent-2); }
-
-  .testimonial-name { font-size: 0.85rem; font-weight: 600; }
-  .testimonial-role { font-size: 0.75rem; color: var(--text-muted); }
-
-  /* ── CTA / JOIN ── */
-  .cta-section { text-align: center; padding: 8rem 2rem; position: relative; }
-
-  .cta-section::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0,224,255,0.07), transparent 70%);
-  }
-
-  .cta-section .section-title { max-width: 600px; margin: 0 auto 1rem; position: relative; }
-  .cta-section .section-desc { margin: 0 auto 2.5rem; text-align: center; position: relative; }
-
-  .cta-form {
-    max-width: 480px; margin: 0 auto; position: relative; z-index: 1;
-    padding: 2rem;
-    background: rgba(12, 12, 18, 0.5);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
-  }
-  .cta-form .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
-
-  .cta-form input, .cta-form select {
-    flex: 1; padding: 0.85rem 1rem;
-    background: var(--bg-card); border: 1px solid var(--border-bright);
-    border-radius: 9px; color: var(--text-primary);
-    font-family: 'Sora', sans-serif; font-size: 0.9rem;
-    transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%;
-  }
-
-  .cta-form input::placeholder { color: var(--text-muted); }
-  .cta-form input:focus, .cta-form select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,224,255,0.12); }
-  .cta-form select { cursor: pointer; }
-  .cta-form select option { background: var(--bg-secondary); color: var(--text-primary); }
-
-  .cta-form .btn-primary { width: 100%; justify-content: center; margin-top: 0.5rem; padding: 1rem; }
-
-  .cta-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; position: relative; font-family: 'JetBrains Mono', monospace; }
-
-  .form-success { display: none; padding: 2rem; text-align: center; position: relative; z-index: 1; }
-
-  .form-success .checkmark {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: rgba(0,255,163,0.1); border: 2px solid var(--accent-3);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 1.2rem; font-size: 1.6rem; color: var(--accent-3);
-    box-shadow: 0 0 30px rgba(0,255,163,0.2);
-  }
-
-  .form-success h3 { font-size: 1.35rem; margin-bottom: 0.5rem; }
-  .form-success p { color: var(--text-secondary); font-size: 0.9rem; }
-
-  .form-error { display: none; color: #ff5f57; font-size: 0.8rem; margin-top: 0.6rem; text-align: center; position: relative; }
-
-  /* ── TERMINAL ── */
-  .hero-terminal {
-    margin-top: 3.2rem; width: 100%; max-width: 540px;
-    background: rgba(12, 12, 18, 0.85); border: 1px solid var(--border-bright);
-    border-radius: 12px; overflow: hidden; position: relative;
-    z-index: 1; animation: fadeUp 0.9s ease 0.7s both;
-    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
-  }
-
-  .terminal-bar {
-    display: flex; align-items: center; gap: 6px;
-    padding: 0.7rem 1rem; background: rgba(255,255,255,0.025);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .terminal-dot { width: 11px; height: 11px; border-radius: 50%; }
-  .terminal-dot:nth-child(1) { background: #ff5f57; }
-  .terminal-dot:nth-child(2) { background: #febc2e; }
-  .terminal-dot:nth-child(3) { background: #28c840; }
-  .terminal-title {
-    margin-left: auto; font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem; color: var(--text-muted);
-  }
-
-  .terminal-body {
-    padding: 1.3rem; font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem; line-height: 1.9; text-align: left;
-  }
-
-  .terminal-line { display: flex; gap: 0.5rem; }
-  .terminal-prompt { color: var(--accent-3); }
-  .terminal-cmd { color: var(--text-primary); }
-  .terminal-output { color: var(--text-muted); }
-  .terminal-highlight { color: var(--accent); }
-
-  .typing-cursor {
-    display: inline-block; width: 8px; height: 16px;
-    background: var(--accent); animation: blink 1s step-end infinite;
-    vertical-align: middle; margin-left: 2px;
-  }
-
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-  /* ── FOOTER ── */
-  footer {
-    padding: 3rem 2rem; border-top: 1px solid var(--border);
-    max-width: var(--max); margin: 0 auto;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 1rem;
-  }
-
-  .footer-left { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-muted); }
-  .footer-links { display: flex; gap: 1.5rem; }
-  .footer-links a { font-size: 0.8rem; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
-  .footer-links a:hover { color: var(--accent); }
-
-  /* ── SCROLL ANIMATIONS ── */
-  .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1); }
-  .reveal.visible { opacity: 1; transform: translateY(0); }
-
-  /* ── DIVIDER ── */
-  .section-divider {
-    max-width: var(--max); margin: 0 auto; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
-    .reveal { opacity: 1; transform: none; }
-  }
-
-  /* ── MOBILE ── */
-  @media (max-width: 768px) {
-    .hamburger { display: flex; }
-    .nav-links {
-      display: none; position: absolute; top: 100%; left: 0; right: 0;
-      flex-direction: column; background: rgba(7,7,11,0.97);
-      backdrop-filter: blur(20px); padding: 1.5rem 2rem; gap: 1.2rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .nav-links.open { display: flex; }
-    .nav-cta { text-align: center; display: block; }
-    .hero h1 { letter-spacing: -1.5px; }
-    .programs-grid { grid-template-columns: 1fr; }
-    section { padding: 4.5rem 1.5rem; }
-    .cta-form .input-row { flex-direction: column; }
-    footer { flex-direction: column; text-align: center; }
-    .impact-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Compute Forward — A structured path into computer science</title>
+  <meta name="description" content="A free, student-led, cohort-based computer science program for K–12 students, from Python foundations through applied AI, algorithms, and independent projects.">
+  <meta name="theme-color" content="#f4efe3">
+  <link rel="canonical" href="https://compute-forward.vercel.app/">
+  <meta property="og:title" content="Compute Forward — A structured path into computer science">
+  <meta property="og:description" content="Free, structured computer science learning with cohorts, projects, and mentorship.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://compute-forward.vercel.app/">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
 </head>
 <body>
-
-<!-- NAV -->
-<nav id="navbar">
-  <a href="#" class="nav-logo">Compute<span>Forward</span></a>
-  <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-links" id="navLinks">
-    <a href="#about">About</a>
-    <a href="#programs">Programs</a>
-    <a href="#impact">Impact</a>
-    <a href="#testimonials">Students</a>
-    <a href="#join" class="nav-cta">Apply Now</a>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div class="status-strip" role="status">
+    <p><span class="status-dot">●</span> INTEREST APPLICATIONS OPEN · COHORT DATES AND COMMITMENT WILL BE PUBLISHED BEFORE ENROLLMENT</p>
   </div>
-</nav>
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="/" aria-label="Compute Forward home">Compute<span>Forward</span></a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-navigation" data-menu-button>Menu</button>
+      <nav class="site-nav" id="site-navigation" aria-label="Primary navigation" data-navigation>
+        <a href="/programs">Programs</a>
+        <a href="/parents">For families</a>
+        <a href="/team">Team</a>
+        <a href="/safety">Safety</a>
+        <a class="button button-primary button-small" href="#apply">Apply for free</a>
+      </nav>
+    </div>
+  </header>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-badge">
-    <span class="dot"></span>
-    Now Enrolling — Summer 2026 Cohort
-  </div>
-  <h1>
-    <span class="line"><span>Learn to <span class="gradient">compute</span>.</span></span>
-    <span class="line"><span>Build to <span class="gradient">compete</span>.</span></span>
-  </h1>
-  <p class="hero-sub">A rigorous, student-led CS program that takes you from zero to competition-ready. Structured like a startup. Built for students who want more than a tutorial.</p>
-  <div class="hero-buttons">
-    <a href="#join" class="btn-primary">Apply for Free →</a>
-    <a href="#programs" class="btn-secondary">View Curriculum</a>
-  </div>
-  <p class="hero-founder">Founded by <strong>Kaushik Atla</strong> · Building the future of CS education</p>
-
-  <div class="hero-terminal">
-    <div class="terminal-bar">
-      <div class="terminal-dot"></div>
-      <div class="terminal-dot"></div>
-      <div class="terminal-dot"></div>
-      <div class="terminal-title">computeforward — zsh</div>
-    </div>
-    <div class="terminal-body">
-      <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-cmd">computeforward --start</span></div>
-      <div class="terminal-output">→ Loading curriculum: <span class="terminal-highlight">Python → Data Structures → Algorithms</span></div>
-      <div class="terminal-output">→ Students enrolled: <span class="terminal-highlight">150+</span></div>
-      <div class="terminal-output">→ USACO promotions this season: <span class="terminal-highlight">12</span></div>
-      <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-cmd">ready_</span><span class="typing-cursor"></span></div>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="reveal">
-    <span class="section-label">// About</span>
-    <h2 class="section-title">CS education is broken.<br>We're fixing it.</h2>
-    <p class="section-desc">Most students learn to code from disjointed tutorials with no structure, no rigor, and no community. ComputeForward is a structured pipeline that turns curious beginners into competitive programmers.</p>
-  </div>
-  <div class="about-grid">
-    <div class="about-card reveal">
-      <div class="about-icon">⚡</div>
-      <h3>Competition-Grade Rigor</h3>
-      <p>Our curriculum is reverse-engineered from USACO Bronze through Gold. Every concept maps to real competition problems, not toy exercises.</p>
-    </div>
-    <div class="about-card reveal">
-      <div class="about-icon">🧬</div>
-      <h3>Cohort-Based Learning</h3>
-      <p>Students progress in small cohorts with peer accountability, live workshops, and 1:1 mentorship from advanced competitive programmers.</p>
-    </div>
-    <div class="about-card reveal">
-      <div class="about-icon">🎯</div>
-      <h3>Measurable Outcomes</h3>
-      <p>We track USACO promotions, problems solved, and project completions. Our students don't just learn — they demonstrate results.</p>
-    </div>
-    <div class="about-card reveal">
-      <div class="about-icon">🌍</div>
-      <h3>Free & Accessible</h3>
-      <p>No paywalls. No gatekeeping. Elite CS education available to every motivated student regardless of background.</p>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- PROGRAMS -->
-<section id="programs">
-  <div class="reveal">
-    <span class="section-label">// Programs</span>
-    <h2 class="section-title">Three levels. One pipeline.</h2>
-    <p class="section-desc">Structured progression from fundamentals to competition-level problem solving. Each level builds directly on the last.</p>
-  </div>
-  <div class="programs-grid">
-    <div class="program-card reveal">
-      <span class="level-tag">Level 1</span>
-      <h3>Python Foundations</h3>
-      <p class="duration">8 weeks · Beginner · No experience needed</p>
-      <p>Master Python from scratch with a focus on computational thinking. Build real projects, not just follow-along scripts.</p>
-      <ul class="program-topics">
-        <li>Variables & Types</li>
-        <li>Control Flow</li>
-        <li>Functions</li>
-        <li>Lists & Dicts</li>
-        <li>File I/O</li>
-        <li>OOP Basics</li>
-        <li>Capstone Project</li>
-      </ul>
-    </div>
-    <div class="program-card reveal">
-      <span class="level-tag">Level 2</span>
-      <h3>Data Structures</h3>
-      <p class="duration">8 weeks · Intermediate · USACO Bronze prep</p>
-      <p>Internalize the data structures that power every algorithm. Implement each from scratch and apply them to real competition problems.</p>
-      <ul class="program-topics">
-        <li>Complexity Analysis</li>
-        <li>Arrays & Strings</li>
-        <li>Stacks & Queues</li>
-        <li>Hash Maps</li>
-        <li>Trees</li>
-        <li>Graphs Intro</li>
-        <li>USACO Bronze Mock</li>
-      </ul>
-    </div>
-    <div class="program-card reveal">
-      <span class="level-tag">Level 3</span>
-      <h3>Algorithms & Competition</h3>
-      <p class="duration">10 weeks · Advanced · USACO Silver+ target</p>
-      <p>Deep dive into algorithmic patterns, optimization, and competitive programming strategy for USACO Silver and beyond.</p>
-      <ul class="program-topics">
-        <li>Binary Search</li>
-        <li>Greedy</li>
-        <li>Prefix Sums</li>
-        <li>Dynamic Programming</li>
-        <li>Graph Algorithms</li>
-        <li>Backtracking</li>
-        <li>USACO Silver Mock</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- IMPACT -->
-<section id="impact">
-  <div class="reveal">
-    <span class="section-label">// Impact</span>
-    <h2 class="section-title">Numbers that matter.</h2>
-    <p class="section-desc">We measure what counts: student outcomes, skill progression, and real competition results.</p>
-  </div>
-  <div class="impact-grid">
-    <div class="impact-card reveal">
-      <div class="impact-num" data-target="150" data-suffix="+">0</div>
-      <div class="impact-label">Students Enrolled</div>
-    </div>
-    <div class="impact-card reveal">
-      <div class="impact-num" data-target="12" data-suffix="">0</div>
-      <div class="impact-label">USACO Promotions</div>
-    </div>
-    <div class="impact-card reveal">
-      <div class="impact-num" data-target="8" data-suffix="">0</div>
-      <div class="impact-label">States Represented</div>
-    </div>
-    <div class="impact-card reveal">
-      <div class="impact-num" data-target="96" data-suffix="%">0</div>
-      <div class="impact-label">Completion Rate</div>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- TESTIMONIALS -->
-<section id="testimonials">
-  <div class="reveal">
-    <span class="section-label">// Students</span>
-    <h2 class="section-title">From our community.</h2>
-    <p class="section-desc">Hear from students who've gone through the ComputeForward pipeline.</p>
-  </div>
-  <div class="testimonials-grid">
-    <div class="testimonial-card reveal">
-      <p class="testimonial-quote">"I went from not knowing what a for-loop was to promoting to USACO Silver in four months. The structure and mentorship made all the difference."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">AK</div>
-        <div>
-          <div class="testimonial-name">Arjun K.</div>
-          <div class="testimonial-role">Level 3 Student · 10th Grade</div>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Free · student-led · cohort-based</p>
+        <h1 id="hero-title">A clear path into <em>computer science.</em></h1>
+        <p class="hero-copy">Compute Forward replaces disconnected tutorials with four levels of structured learning, peer accountability, live support, and projects that show what you can do.</p>
+        <div class="button-row">
+          <a class="button button-primary" href="#apply">Start an interest application</a>
+          <a class="button button-secondary" href="/programs">Compare all four levels</a>
         </div>
       </div>
-    </div>
-    <div class="testimonial-card reveal">
-      <p class="testimonial-quote">"The cohort model kept me accountable in a way that solo tutorial-grinding never did. I actually look forward to problem sets now."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">SM</div>
-        <div>
-          <div class="testimonial-name">Sophia M.</div>
-          <div class="testimonial-role">Level 2 Student · 8th Grade</div>
+      <aside class="field-note" aria-label="Current program facts">
+        <dl>
+          <div><dt>Current status</dt><dd>Interest list open</dd></div>
+          <div><dt>Tuition</dt><dd>$0 at every stage</dd></div>
+          <div><dt>Format</dt><dd>Online, cohort-based</dd></div>
+          <div><dt>Next dates</dt><dd>Published before offers</dd></div>
+          <div><dt>Response target</dt><dd>Within 48 hours</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="section section-paper" aria-labelledby="truth-title">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">The honest version</p>
+            <h2 id="truth-title">Know what is decided—and what is still being scheduled.</h2>
+          </div>
+          <p class="section-intro">We will not use stale dates, unsupported outcome counters, or invented commitments to push an application.</p>
+        </div>
+        <div class="truth-grid">
+          <article class="card truth-card">
+            <h3>What is fixed</h3>
+            <p>The program is free, follows one four-level pathway, and uses human admissions review rather than automated decisions.</p>
+          </article>
+          <article class="card truth-card">
+            <h3>What comes with an offer</h3>
+            <p>Exact dates, meeting times, time zone, workload, technology requirements, capacity, and named safety contacts.</p>
+          </article>
+          <article class="card truth-card warning">
+            <h3>What “apply” means now</h3>
+            <p>You are joining the next-cohort interest and placement process. No active Summer 2026 cohort is being implied.</p>
+          </article>
         </div>
       </div>
-    </div>
-    <div class="testimonial-card reveal">
-      <p class="testimonial-quote">"ComputeForward is what I wish existed when I started. It's free, rigorous, and the community is incredibly supportive."</p>
-      <div class="testimonial-author">
-        <div class="testimonial-avatar">RJ</div>
-        <div>
-          <div class="testimonial-name">Ryan J.</div>
-          <div class="testimonial-role">Level 3 Student · 11th Grade</div>
+    </section>
+
+    <section class="section" id="programs" aria-labelledby="programs-title">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">One pipeline · four levels</p>
+            <h2 id="programs-title">Start where you are. Keep moving forward.</h2>
+          </div>
+          <p class="section-intro">Each level has a distinct purpose. Placement is based on readiness, not age or access to expensive prior instruction.</p>
+        </div>
+        <div class="program-grid">
+          <article class="card program-card" data-level="1">
+            <p class="program-meta">Level 1 · 8 weeks</p>
+            <h3>Python Foundations</h3>
+            <p>Learn Python and computational thinking by writing, debugging, explaining, and improving real programs.</p>
+            <p class="program-audience"><strong>Best for:</strong> absolute beginners. No prior experience is required.</p>
+          </article>
+          <article class="card program-card" data-level="2">
+            <p class="program-meta">Level 2 · 8 weeks</p>
+            <h3>Applied AI &amp; Machine Learning</h3>
+            <p>Move from knowing Python to using NumPy, pandas, scikit-learn, and introductory neural-network tools in applied mini-projects.</p>
+            <p class="program-audience"><strong>Best for:</strong> students with Level 1 skills or baseline Python proficiency.</p>
+          </article>
+          <article class="card program-card" data-level="3">
+            <p class="program-meta">Level 3 · 10 weeks</p>
+            <h3>Algorithms &amp; Competitive Programming</h3>
+            <p>Practice core data structures, algorithmic patterns, contest strategy, and mock contests aligned with USACO Bronze through Silver readiness.</p>
+            <p class="program-audience"><strong>Best for:</strong> intermediate to advanced problem solvers.</p>
+          </article>
+          <article class="card program-card" data-level="4">
+            <p class="program-meta">Level 4 · ongoing</p>
+            <h3>Passion Project &amp; Research</h3>
+            <p>Develop an independent AI application, research paper, startup prototype, or technical tool with mentor guidance.</p>
+            <p class="program-audience"><strong>Best for:</strong> prepared students ready to own a portfolio-grade project.</p>
+          </article>
+        </div>
+        <p><a class="button button-secondary" href="/programs">See prerequisites, sample weeks, and placement guidance</a></p>
+      </div>
+    </section>
+
+    <section class="section section-dark" aria-labelledby="structure-title">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">How it works</p>
+            <h2 id="structure-title">Structure, community, progression.</h2>
+          </div>
+          <p class="section-intro">The website is not the classroom. It explains fit, accepts applications securely, and gives families enough information to make a considered decision.</p>
+        </div>
+        <div class="steps-grid">
+          <article class="card trust-card step">
+            <h3>Apply and choose a level</h3>
+            <p class="muted">Submit minimal contact, grade, age-range, level, and consent information. Every application receives a durable reference.</p>
+          </article>
+          <article class="card trust-card step">
+            <h3>Human placement review</h3>
+            <p class="muted">Founders review readiness and follow up. No algorithm makes admissions decisions.</p>
+          </article>
+          <article class="card trust-card step">
+            <h3>Review the full commitment</h3>
+            <p class="muted">Families receive dates, schedule, workload, technology needs, capacity, and safety contacts before accepting.</p>
+          </article>
         </div>
       </div>
+    </section>
+
+    <section class="section" aria-labelledby="trust-title">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Designed for trust</p>
+            <h2 id="trust-title">Students deserve rigor. Families deserve clarity.</h2>
+          </div>
+          <p class="section-intro">These are operating commitments, not marketing decorations.</p>
+        </div>
+        <div class="trust-grid">
+          <article class="card truth-card">
+            <h3>Student safety</h3>
+            <p>Approved communication channels, visible scheduling, conduct rules, guardian-informed one-to-one support, and a written escalation path.</p>
+            <p><a href="/safety">Read the Student Safety Policy</a></p>
+          </article>
+          <article class="card truth-card">
+            <h3>Data minimization</h3>
+            <p>Applications are stored in a protected database, never in public site files. Applicants can request verified deletion.</p>
+            <p><a href="/privacy">Read the Privacy Policy</a></p>
+          </article>
+          <article class="card truth-card">
+            <h3>Evidence before claims</h3>
+            <p>Public metrics and testimonials stay unpublished until their source, period, definition, and consent are documented.</p>
+            <p><a href="/parents">Read the family guide</a></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-paper" aria-labelledby="team-title">
+      <div class="section-inner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Accountability</p>
+            <h2 id="team-title">Know who is responsible.</h2>
+          </div>
+          <p class="section-intro">Compute Forward was founded by Anish Koppula and Kaushik Atla. It is student-led, and we are explicit about the safeguards that must exist before a cohort begins.</p>
+        </div>
+        <div class="team-grid">
+          <article class="card team-card"><h3>Anish Koppula</h3><p>Co-founder</p><p><a href="mailto:anishkoppula@gmail.com">anishkoppula@gmail.com</a></p></article>
+          <article class="card team-card"><h3>Kaushik Atla</h3><p>Co-founder</p><p><a href="mailto:kaushik.atla@gmail.com">kaushik.atla@gmail.com</a></p></article>
+        </div>
+        <p><a href="/team">Team, mentor, and adult-oversight publication standard →</a></p>
+      </div>
+    </section>
+
+    <section class="section" id="apply" aria-labelledby="apply-title">
+      <div class="section-inner form-shell">
+        <div>
+          <p class="eyebrow">Interest application</p>
+          <h2 id="apply-title">Tell us where you want to start.</h2>
+          <p class="section-intro">The form takes about five minutes. Level 1 requires no prior experience—we ask about coding background only to place and support each student well. Fields marked <span class="required">*</span> are required.</p>
+          <div class="notice">
+            <h3>Before you submit</h3>
+            <p>Applicants under 18 need parent or guardian authorization. A parent or legal guardian must submit for applicants under 13.</p>
+          </div>
+          <p class="muted">We aim to reply within 48 hours. Submitting does not commit you to a cohort.</p>
+        </div>
+
+        <form class="application-form" id="application-form" action="/api/apply" method="post" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="applicant-name">Applicant full name <span class="required">*</span></label>
+              <input id="applicant-name" name="name" type="text" maxlength="120" autocomplete="name" required aria-describedby="name-error">
+              <p class="field-error" id="name-error" data-error-for="name"></p>
+            </div>
+            <div class="field">
+              <label for="contact-email">Student email <span class="required">*</span></label>
+              <input id="contact-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="email-hint email-error">
+              <p class="field-hint" id="email-hint">We send the receipt here. For an applicant under 13, a parent must complete the form and may use the parent address if the student does not have email.</p>
+              <p class="field-error" id="email-error" data-error-for="email"></p>
+            </div>
+            <div class="field">
+              <label for="grade">Current grade <span class="required">*</span></label>
+              <select id="grade" name="grade" required aria-describedby="grade-error">
+                <option value="">Select a grade</option>
+                <option value="6th">6th grade</option>
+                <option value="7th">7th grade</option>
+                <option value="8th">8th grade</option>
+                <option value="9th">9th grade</option>
+                <option value="10th">10th grade</option>
+                <option value="11th">11th grade</option>
+                <option value="12th">12th grade</option>
+              </select>
+              <p class="field-error" id="grade-error" data-error-for="grade"></p>
+            </div>
+            <div class="field">
+              <label for="age-range">Applicant age range <span class="required">*</span></label>
+              <select id="age-range" name="ageRange" required aria-describedby="age-error">
+                <option value="">Select an age range</option>
+                <option value="under-13">Under 13</option>
+                <option value="13-17">13–17</option>
+                <option value="18-plus">18 or older</option>
+              </select>
+              <p class="field-error" id="age-error" data-error-for="ageRange"></p>
+            </div>
+            <div class="field field-full">
+              <label for="level">Preferred program level <span class="required">*</span></label>
+              <select id="level" name="level" required aria-describedby="level-error">
+                <option value="">Choose a level</option>
+                <option>Level 1 — Python Foundations</option>
+                <option>Level 2 — Applied AI &amp; Machine Learning</option>
+                <option>Level 3 — Algorithms &amp; Competitive Programming</option>
+                <option>Level 4 — Passion Project &amp; Research</option>
+              </select>
+              <p class="field-error" id="level-error" data-error-for="level"></p>
+            </div>
+
+            <section class="application-questions field-full" aria-labelledby="background-title">
+              <h3 id="background-title">A little about your coding background</h3>
+              <p class="field-hint">Short, honest answers are best. “No experience yet” is a completely valid Level 1 answer.</p>
+              <div class="form-grid">
+                <div class="field field-full">
+                  <label for="experience-level">Which best describes your current experience? <span class="required">*</span></label>
+                  <select id="experience-level" name="experienceLevel" required aria-describedby="experience-error">
+                    <option value="">Choose the closest answer</option>
+                    <option value="none">I have not coded yet</option>
+                    <option value="exploring">I have tried tutorials, classes, or block coding</option>
+                    <option value="projects">I can write some code and have built a small project</option>
+                    <option value="independent">I can build or solve problems independently</option>
+                  </select>
+                  <p class="field-error" id="experience-error" data-error-for="experienceLevel"></p>
+                </div>
+                <div class="field field-full">
+                  <label for="coding-tools">What languages, tools, courses, or platforms have you tried?</label>
+                  <textarea id="coding-tools" name="codingTools" rows="3" maxlength="300" aria-describedby="coding-tools-hint coding-tools-error" placeholder="For example: Scratch, Python, Java, Code.org, a school class—or none yet"></textarea>
+                  <p class="field-hint" id="coding-tools-hint">Optional · 300 characters maximum</p>
+                  <p class="field-error" id="coding-tools-error" data-error-for="codingTools"></p>
+                </div>
+                <div class="field field-full">
+                  <label for="project-experience">Tell us about something you have built or a coding problem you enjoyed.</label>
+                  <textarea id="project-experience" name="projectExperience" rows="4" maxlength="600" aria-describedby="project-hint project-error" placeholder="A small project is great. If you are new to coding, you can leave this blank."></textarea>
+                  <p class="field-hint" id="project-hint">Optional · 600 characters maximum</p>
+                  <p class="field-error" id="project-error" data-error-for="projectExperience"></p>
+                </div>
+                <div class="field field-full">
+                  <label for="learning-goals">What would you like to learn or make through Compute Forward? <span class="required">*</span></label>
+                  <textarea id="learning-goals" name="learningGoals" rows="4" minlength="10" maxlength="600" required aria-describedby="goals-hint goals-error" placeholder="A few sentences about what excites you and what you hope to do"></textarea>
+                  <p class="field-hint" id="goals-hint">10–600 characters</p>
+                  <p class="field-error" id="goals-error" data-error-for="learningGoals"></p>
+                </div>
+              </div>
+            </section>
+
+            <section class="guardian-fields" data-guardian-fields aria-labelledby="guardian-title">
+              <h3 id="guardian-title">Parent or guardian information</h3>
+              <p class="field-hint">Required for every applicant under 18. Applicants 18 or older may leave this blank.</p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="guardian-name">Parent or guardian name</label>
+                  <input id="guardian-name" name="guardianName" type="text" maxlength="120" autocomplete="name" data-guardian-required>
+                  <p class="field-error" data-error-for="guardianName"></p>
+                </div>
+                <div class="field">
+                  <label for="guardian-email">Parent or guardian email</label>
+                  <input id="guardian-email" name="guardianEmail" type="email" maxlength="254" autocomplete="email" data-guardian-required>
+                  <p class="field-error" data-error-for="guardianEmail"></p>
+                </div>
+              </div>
+              <div class="checkbox-field">
+                <input id="guardian-consent" name="guardianConsent" type="checkbox" data-guardian-required>
+                <label for="guardian-consent">I am the applicant’s parent/legal guardian, or I confirm that their parent/legal guardian authorizes this application.</label>
+              </div>
+              <p class="field-error" data-error-for="guardianConsent"></p>
+              <div class="checkbox-field" data-under-13-only>
+                <input id="submitted-by-guardian" name="submittedByGuardian" type="checkbox">
+                <label for="submitted-by-guardian">I am a parent or legal guardian submitting this application for an applicant under 13.</label>
+              </div>
+              <p class="field-error" data-error-for="submittedByGuardian"></p>
+            </section>
+          </div>
+
+          <div class="checkbox-list">
+            <div class="checkbox-field">
+              <input id="privacy-consent" name="privacyConsent" type="checkbox" required>
+              <label for="privacy-consent">I have read and accept the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. <span class="required">*</span></label>
+            </div>
+            <p class="field-error" data-error-for="privacyConsent"></p>
+            <div class="checkbox-field">
+              <input id="terms-consent" name="termsConsent" type="checkbox" required>
+              <label for="terms-consent">I have read and accept the <a href="/terms" target="_blank" rel="noopener">Terms of Participation</a>. <span class="required">*</span></label>
+            </div>
+            <p class="field-error" data-error-for="termsConsent"></p>
+            <div class="checkbox-field">
+              <input id="safety-consent" name="safetyConsent" type="checkbox" required>
+              <label for="safety-consent">I have read and agree to follow the <a href="/safety" target="_blank" rel="noopener">Student Safety Policy</a>. <span class="required">*</span></label>
+            </div>
+            <p class="field-error" data-error-for="safetyConsent"></p>
+            <div class="checkbox-field">
+              <input id="communications-consent" name="communicationsConsent" type="checkbox">
+              <label for="communications-consent">Optional: send me future cohort-opening announcements. Operational messages about this application do not require this box.</label>
+            </div>
+          </div>
+
+          <input type="hidden" name="cohortSlug" value="interest-2026">
+          <input type="hidden" name="startedAt" value="">
+          <div class="honeypot" aria-hidden="true">
+            <label for="company-website">Company website</label>
+            <input id="company-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <p class="form-status" role="status" aria-live="polite" data-form-status></p>
+          <button class="button button-primary" type="submit">Submit secure application</button>
+        </form>
+
+        <section class="success-panel" data-application-success tabindex="-1" hidden aria-labelledby="success-title">
+          <p class="eyebrow">Securely stored</p>
+          <h3 id="success-title">Your application is saved.</h3>
+          <p>Keep this reference:</p>
+          <p class="reference" data-reference></p>
+          <p data-confirmation-note></p>
+          <p class="field-hint">The founders can review every stored submission in the protected admissions dashboard.</p>
+          <p>We aim to respond within 48 hours.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div><a class="brand" href="/">Compute<span>Forward</span></a><p>Free, structured computer science education for motivated K–12 students.</p></div>
+      <div><p class="footer-title">Understand the program</p><div class="footer-links"><a href="/programs">Programs and placement</a><a href="/parents">Family guide</a><a href="/team">Team and oversight</a></div></div>
+      <div><p class="footer-title">Policies and contact</p><div class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/safety">Student safety</a><a href="mailto:anishkoppula@gmail.com">Email Anish</a><a href="mailto:kaushik.atla@gmail.com">Email Kaushik</a></div></div>
     </div>
-  </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- JOIN / CTA -->
-<section class="cta-section" id="join">
-  <span class="section-label reveal">// Join Us</span>
-  <h2 class="section-title reveal">Ready to compute forward?</h2>
-  <p class="section-desc reveal">Applications are rolling. No experience required for Level 1. Join 150+ students building real CS skills.</p>
-
-  <div class="cta-form reveal" id="applicationForm">
-    <div class="input-row">
-      <input type="text" id="formName" placeholder="Full name" required>
-      <input type="email" id="formEmail" placeholder="Email address" required>
-    </div>
-    <div class="input-row">
-      <input type="text" id="formGrade" placeholder="Grade (e.g., 9th)">
-      <select id="formLevel">
-        <option value="" disabled selected>Select level</option>
-        <option value="Level 1 — Python Foundations">Level 1 — Python Foundations</option>
-        <option value="Level 2 — Data Structures">Level 2 — Data Structures</option>
-        <option value="Level 3 — Algorithms">Level 3 — Algorithms</option>
-      </select>
-    </div>
-    <button class="btn-primary" id="submitBtn" onclick="handleSubmit()">Submit Application →</button>
-    <div class="form-error" id="formError"></div>
-    <p class="cta-note">Free forever. We'll reach out within 48 hours.</p>
-  </div>
-
-  <div class="form-success" id="formSuccess">
-    <div class="checkmark">✓</div>
-    <h3>Application Received!</h3>
-    <p>Thanks for applying to ComputeForward. We'll be in touch at your email within 48 hours.</p>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-left">© 2026 ComputeForward · Founded by Kaushik Atla</div>
-  <div class="footer-links">
-    <a href="#about">About</a>
-    <a href="#programs">Programs</a>
-    <a href="mailto:kaushik.atla@gmail.com">Contact</a>
-  </div>
-</footer>
-
-<script>
-  // ── NAV SCROLL ──
-  const navbar = document.getElementById('navbar');
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 50);
-  });
-
-  // ── HAMBURGER MENU ──
-  const hamburger = document.getElementById('hamburger');
-  const navLinks = document.getElementById('navLinks');
-  hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
-  });
-  navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      hamburger.classList.remove('active');
-      navLinks.classList.remove('open');
-    });
-  });
-
-  // ── SCROLL REVEAL ──
-  const revealEls = document.querySelectorAll('.reveal');
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-  revealEls.forEach(el => revealObserver.observe(el));
-
-  // ── COUNTER ANIMATION ──
-  const counterEls = document.querySelectorAll('.impact-num');
-  const counterObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        const target = parseInt(el.dataset.target);
-        const suffix = el.dataset.suffix || '';
-        let current = 0;
-        const duration = 1500;
-        const step = target / (duration / 16);
-        const timer = setInterval(() => {
-          current += step;
-          if (current >= target) {
-            el.textContent = target + suffix;
-            clearInterval(timer);
-          } else {
-            el.textContent = Math.floor(current);
-          }
-        }, 16);
-        counterObserver.unobserve(el);
-      }
-    });
-  }, { threshold: 0.5 });
-  counterEls.forEach(el => counterObserver.observe(el));
-
-  // ── SMOOTH SCROLL ──
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const href = a.getAttribute('href');
-      if (href === '#') return;
-      e.preventDefault();
-      const target = document.querySelector(href);
-      if (target) {
-        const offset = 80;
-        const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
-        window.scrollTo({ top, behavior: 'smooth' });
-      }
-    });
-  });
-
-  // ── SUBTLE PARALLAX ON HERO GRID ──
-  const heroGrid = document.querySelector('.hero-grid');
-  window.addEventListener('mousemove', (e) => {
-    if (window.innerWidth < 768) return;
-    const x = (e.clientX / window.innerWidth - 0.5) * 14;
-    const y = (e.clientY / window.innerHeight - 0.5) * 14;
-    heroGrid.style.transform = `translate(${x}px, ${y}px)`;
-  });
-
-  // ══════════════════════════════════════════════════════════
-  // FORM SUBMISSION
-  // Order of delivery:
-  //   1. Your own backend  (POST /api/apply)  — stores every application
-  //   2. Web3Forms         — emails kaushik.atla@gmail.com
-  //   3. mailto:           — last-resort fallback
-  // The form succeeds if ANY of these works.
-  // ══════════════════════════════════════════════════════════
-
-  const API_ENDPOINT  = '/api/apply';
-  const WEB3FORMS_KEY = '296d0733-3694-48c5-a51c-c1475a83932c';
-
-  async function handleSubmit() {
-    const name  = document.getElementById('formName').value.trim();
-    const email = document.getElementById('formEmail').value.trim();
-    const grade = document.getElementById('formGrade').value.trim();
-    const level = document.getElementById('formLevel').value;
-    const btn   = document.getElementById('submitBtn');
-    const errorEl = document.getElementById('formError');
-
-    errorEl.style.display = 'none';
-
-    // ── Validation ──
-    if (!name || !email) {
-      errorEl.textContent = 'Please fill in your name and email.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errorEl.textContent = 'Please enter a valid email address.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (!level) {
-      errorEl.textContent = 'Please select a program level.';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Submitting...';
-
-    const payload = { name, email, grade: grade || 'Not specified', level };
-
-    // ── 1. Try our own backend first ──
-    try {
-      const res = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data.success !== false) { showSuccess(); return; }
-      }
-    } catch (_) { /* backend not running (e.g. static deploy) — fall through */ }
-
-    // ── 2. Try Web3Forms (email) ──
-    if (WEB3FORMS_KEY && WEB3FORMS_KEY !== 'YOUR_ACCESS_KEY_HERE') {
-      try {
-        const res = await fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            access_key: WEB3FORMS_KEY,
-            subject: 'New ComputeForward Application — ' + name,
-            from_name: 'ComputeForward Website',
-            name, email,
-            grade: payload.grade,
-            program_level: level,
-            message: 'Name: ' + name + '\nEmail: ' + email + '\nGrade: ' + payload.grade + '\nLevel: ' + level
-          })
-        });
-        const data = await res.json();
-        if (data.success) { showSuccess(); return; }
-      } catch (_) { /* fall through to mailto */ }
-    }
-
-    // ── 3. Last resort: mailto ──
-    openMailto(name, email, payload.grade, level);
-  }
-
-  function openMailto(name, email, grade, level) {
-    const subject = encodeURIComponent('ComputeForward Application — ' + name);
-    const body = encodeURIComponent(
-      'New ComputeForward Application\n\n' +
-      'Name: ' + name + '\n' +
-      'Email: ' + email + '\n' +
-      'Grade: ' + grade + '\n' +
-      'Program Level: ' + level
-    );
-    window.open('mailto:kaushik.atla@gmail.com?subject=' + subject + '&body=' + body, '_self');
-    showSuccess();
-  }
-
-  function showSuccess() {
-    document.getElementById('applicationForm').style.display = 'none';
-    document.getElementById('formSuccess').style.display = 'block';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 'Submit Application →';
-  }
-
-  // Allow Enter key to submit
-  document.querySelectorAll('.cta-form input, .cta-form select').forEach(el => {
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleSubmit();
-    });
-  });
-</script>
-
+    <p class="footer-bottom">© 2026 Compute Forward · Founded by Anish Koppula and Kaushik Atla · No advertising trackers</p>
+  </footer>
 </body>
 </html>

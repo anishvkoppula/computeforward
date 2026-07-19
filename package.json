@@ -1,17 +1,33 @@
 {
   "name": "computeforward",
   "version": "1.0.0",
-  "description": "ComputeForward — Education Platform. Static frontend + lightweight application backend.",
+  "description": "ComputeForward — secure enrollment and public program information platform.",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build": "node scripts/build-static.js",
+    "db:migrate": "node scripts/migrate.js",
+    "data:retention": "node scripts/retention.js",
+    "test": "node --test --test-concurrency=1 test/app.test.js test/mailer.test.js",
+    "test:postgres": "node --test --test-concurrency=1 test/postgres.test.js",
+    "test:e2e": "playwright test",
+    "check": "node --check server.js && node --check app.js && node --test --test-concurrency=1 test/app.test.js test/mailer.test.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.0",
+    "helmet": "^8.3.0",
+    "nodemailer": "^9.0.3",
+    "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1"
   }
 }
