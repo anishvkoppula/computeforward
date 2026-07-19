@@ -1,12 +1,13 @@
 # Public Claims Register
 
-Last updated: 2026-07-17
+Last updated: 2026-07-19
 
 Public metrics and testimonials were removed during stabilization because no evidence or consent records were present in the repository. Nothing should be republished until the register includes a source, definition, reporting period, owner, and publication consent where relevant.
 
 | Claim | Current public status | Basis | Owner / next action |
 |---|---|---|---|
-| Compute Forward was founded by Anish Koppula and Kaushik Atla | Published | `ORGANIZATION.md` and `PRD.md` | Founders to approve biographies and profiles |
+| Compute Forward was founded by Anish Koppula and Kaushik Atla | Published | `ORGANIZATION.md`, `PRD.md`, and founder-supplied biographies approved July 19, 2026 | Review profiles when founder roles change |
+| Anish Koppula and Kaushik Atla are USACO Platinum competitors | Published | Founder-supplied biographies approved July 19, 2026 | Founders retain supporting profile evidence and review annually |
 | Program is free at every stage | Published | `ORGANIZATION.md` and `PRD.md` | Founders must notify product owner before changing operating model |
 | Program is student-led | Published | `ORGANIZATION.md` and `PRD.md` | Publish formal status and oversight before active cohort |
 | Four-level curriculum titles and durations | Published | `ORGANIZATION.md` and `PRD.md` | Curriculum owner to approve detailed weekly syllabi |

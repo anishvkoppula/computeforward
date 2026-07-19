@@ -274,6 +274,62 @@ h3 { margin: 0 0 .65rem; font-size: 1.45rem; letter-spacing: -.025em; }
 .trust-card { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
 .trust-card a { color: #8fe1e4; }
 .team-card { border-left: 6px solid var(--orange); }
+.team-link-card {
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  text-decoration: none;
+  transform-origin: center;
+  will-change: transform;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.team-link-card:hover,
+.team-link-card:focus-visible {
+  z-index: 1;
+  color: var(--ink);
+  border-color: var(--teal);
+  box-shadow: 9px 9px 0 var(--teal);
+  transform: translateY(-4px) scale(1.025);
+}
+.team-link-card:active { transform: translateY(-1px) scale(1.01); }
+.team-link-card h3 { color: var(--ink); }
+.team-link-card p { margin: 0 0 1.2rem; }
+.team-card-contact { color: var(--blue); font-size: .9rem; text-decoration: underline; text-underline-offset: .16em; }
+.team-card-cue {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  color: var(--teal);
+  font: 800 .68rem/1.4 var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.team-card h2 { margin-bottom: .65rem; }
+.founder-role {
+  margin: 0 0 1.2rem;
+  color: var(--teal);
+  font: 800 .72rem/1.5 var(--mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.founder-role span { padding: 0 .3rem; color: var(--orange); }
+.founder-bio { margin: 0; color: var(--ink-soft); }
+.founder-focus {
+  margin: 1.35rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+}
+.founder-focus strong {
+  display: block;
+  margin-bottom: .3rem;
+  color: var(--ink);
+  font: 800 .66rem/1.4 var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.founder-focus span { color: var(--ink-soft); font-size: .84rem; }
+.founder-contact { margin: 1.2rem 0 0; font-size: .88rem; font-weight: 700; }
 
 .form-shell {
   display: grid;
@@ -443,6 +499,7 @@ td select { min-width: 120px; padding: .35rem; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  .team-link-card:hover, .team-link-card:focus-visible, .team-link-card:active { transform: none; }
 }
 
 @media print {

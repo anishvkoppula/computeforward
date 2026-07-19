@@ -13,6 +13,18 @@ test('public pages render without console errors or horizontal overflow', async 
     expect(response.status(), pathname).toBe(200);
     await expect(page.locator('main')).toBeVisible();
     await expect(page.locator('body')).not.toContainText(/research/i);
+    if (pathname === '/') {
+      const founderCards = page.locator('.team-link-card');
+      await expect(founderCards).toHaveCount(2);
+      await expect(founderCards.first()).toHaveAttribute('href', '/team');
+      await expect(founderCards.last()).toHaveAttribute('href', '/team');
+    }
+    if (pathname === '/programs') {
+      await expect(page.locator('main')).not.toContainText(/Level [1-4] ·/);
+    }
+    if (pathname === '/team') {
+      await expect(page.locator('main')).not.toContainText('Organizational transparency');
+    }
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(overflow, `${pathname} has horizontal overflow`).toBe(false);
   }
