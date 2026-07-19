@@ -12,6 +12,7 @@ test('public pages render without console errors or horizontal overflow', async 
     const response = await page.goto(pathname);
     expect(response.status(), pathname).toBe(200);
     await expect(page.locator('main')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/research/i);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(overflow, `${pathname} has horizontal overflow`).toBe(false);
   }
@@ -41,6 +42,8 @@ test('public internal links and same-page anchors resolve', async ({ page, reque
 
 test('every application control has a programmatic label', async ({ page }) => {
   await page.goto('/#apply');
+  await expect(page.locator('#level')).toContainText('Level 4 — Passion Project');
+  await expect(page.locator('#level')).not.toContainText(/research/i);
   const unlabeled = await page.locator('#application-form input, #application-form select, #application-form textarea, #application-form button').evaluateAll(elements =>
     elements.filter(element => {
       if (element.type === 'hidden') return false;

@@ -277,7 +277,7 @@ test('admin can permanently delete one application and its orphaned personal rec
       ...validApplication,
       name: 'Admin Deletion Test',
       email: 'admin-delete@example.com',
-      level: 'Level 4 — Passion Project & Research'
+      level: 'Level 4 — Passion Project'
     })
   });
   assert.equal(createdResponse.status, 201);

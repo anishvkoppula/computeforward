@@ -297,7 +297,7 @@ Launch:
 - Python Foundations
 - Applied AI and Machine Learning
 - Algorithms and Competitive Programming
-- Passion Project and Research
+- Passion Project
 - Curriculum overview
 
 Each page includes prerequisites, weekly topics, workload, assessments, progression requirements, and expected outcomes.

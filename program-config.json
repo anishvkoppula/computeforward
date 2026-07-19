@@ -48,11 +48,11 @@
     },
     {
       "id": "level-4",
-      "value": "Level 4 — Passion Project & Research",
-      "title": "Passion Project & Research",
+      "value": "Level 4 — Passion Project",
+      "title": "Passion Project",
       "duration": "Ongoing, mentor-guided",
       "audience": "Students who completed prior levels or demonstrate strong independent readiness",
-      "goal": "Create a portfolio-grade AI application, research paper, startup prototype, or technical tool."
+      "goal": "Create a portfolio-grade AI application, startup prototype, developer tool, or other ambitious technical project."
     }
   ],
   "policyVersions": {

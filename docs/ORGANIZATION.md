@@ -46,10 +46,10 @@ The program has **four sequential levels** that form one unified pipeline. Each 
 - **Target:** Intermediate to advanced students, USACO Bronze through Silver prep
 - **Goal:** Master core data structures, algorithmic patterns, and competitive programming strategy through structured problem solving and mock contests
 
-### Level 4 — Passion Project and Research
+### Level 4 — Passion Project
 - **Duration:** Ongoing, mentor-guided
 - **Target:** Students who have completed prior levels or demonstrate strong independent readiness
-- **Goal:** Build something real. Students develop an independent project — an AI application, a research paper, a startup prototype, or a technical tool — with direct mentorship from Compute Forward leadership. Output is portfolio-grade and meant to represent the student's best work
+- **Goal:** Build something real. Students develop an independent project — an AI application, a startup prototype, a developer tool, or another ambitious technical project — with direct mentorship from Compute Forward leadership. Output is portfolio-grade and meant to represent the student's best work
 
 ---
 

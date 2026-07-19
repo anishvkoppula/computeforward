@@ -66,7 +66,7 @@ remove all friction from applying.
 |---|---|---|
 | **The Beginner** | Self-motivated student, little/no coding experience, no access to paid enrichment. | A trustworthy on-ramp; reassurance that "no experience" is truly okay (Level 1). |
 | **The Climber** | Has Python basics, wants AI/ML or competitive programming. | Clear sense of which level fits; evidence of rigor and outcomes. |
-| **The Builder** | Advanced student ready for an independent project or research. | Signal that Level 4 offers real mentorship and portfolio-grade output. |
+| **The Builder** | Advanced student ready for an independent portfolio project. | Signal that Level 4 offers real mentorship and portfolio-grade output. |
 | **The Founders (admin)** | Anish & Kaushik, reviewing applications. | A private, organized view of incoming applications with contact details. |
 
 Audience is broadly **K–12 students**, weighted toward middle/high school.
@@ -92,7 +92,7 @@ One unified pipeline; each level builds on the previous. *Full curriculum detail
 | **1** | Python Foundations | 8 weeks | Absolute beginners, no experience | Master Python + computational thinking; build real projects |
 | **2** | Applied AI & Machine Learning | 8 weeks | Completed L1 / baseline Python | Build with AI — NumPy, pandas, scikit-learn, intro neural nets (TensorFlow/PyTorch); applied mini-projects |
 | **3** | Algorithms & Competitive Programming | 10 weeks | Intermediate–advanced, USACO Bronze→Silver | Core data structures, algorithmic patterns, contest strategy, mock contests |
-| **4** | Passion Project & Research | Ongoing, mentor-guided | Completed prior levels / strong independent readiness | Build something real — AI app, research paper, startup prototype, or tool; portfolio-grade |
+| **4** | Passion Project | Ongoing, mentor-guided | Completed prior levels / strong independent readiness | Build something real — AI app, startup prototype, developer tool, or another portfolio-grade project |
 
 ---
 
