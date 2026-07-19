@@ -4,7 +4,7 @@
 |---|---|
 | **Product** | Compute Forward platform (marketing site + application system) |
 | **Owners** | Anish Koppula, Kaushik Atla |
-| **Website** | https://compute-forward.vercel.app/ |
+| **Website** | https://computeforward-beige.vercel.app/ |
 | **Contact** | anishkoppula@gmail.com · kaushik.atla@gmail.com |
 | **Status** | Living document — last updated 2026-07-18 |
 | **Related** | [ORGANIZATION.md](./ORGANIZATION.md) — brand & program context |

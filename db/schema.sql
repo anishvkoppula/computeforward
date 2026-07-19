@@ -16,9 +16,13 @@ CREATE TABLE IF NOT EXISTS cohorts (
   seat_limit integer CHECK (seat_limit IS NULL OR seat_limit > 0),
   cost_cents integer NOT NULL DEFAULT 0 CHECK (cost_cents >= 0),
   status_message text NOT NULL,
+  is_current boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE cohorts ADD COLUMN IF NOT EXISTS is_current boolean NOT NULL DEFAULT false;
+CREATE UNIQUE INDEX IF NOT EXISTS cohorts_one_current_idx ON cohorts (is_current) WHERE is_current;
 
 CREATE TABLE IF NOT EXISTS applicants (
   id uuid PRIMARY KEY,

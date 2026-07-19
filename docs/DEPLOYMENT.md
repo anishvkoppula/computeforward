@@ -85,7 +85,7 @@ Configure the platform health check to `/readyz`. Ensure persistent runtime logs
 
 ## Custom domain and canonical URLs
 
-The HTML, sitemap, and robots file currently use `https://compute-forward.vercel.app`. When the permanent name and domain are approved:
+The HTML, sitemap, and robots file currently use `https://computeforward-beige.vercel.app`. When the permanent name and domain are approved:
 
 1. Replace the canonical origin in all HTML files, `robots.txt`, and `sitemap.xml`.
 2. Set `PUBLIC_ORIGIN` to the same HTTPS origin.

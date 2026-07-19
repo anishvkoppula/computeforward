@@ -10,6 +10,7 @@
     "build": "node scripts/build-static.js",
     "db:migrate": "node scripts/migrate.js",
     "data:retention": "node scripts/retention.js",
+    "secrets:generate": "node scripts/generate-secrets.js",
     "test": "node --test --test-concurrency=1 test/app.test.js test/mailer.test.js",
     "test:postgres": "node --test --test-concurrency=1 test/postgres.test.js",
     "test:e2e": "playwright test",

@@ -3,6 +3,7 @@ import { after, before, test } from 'node:test';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { config as baseConfig, validateRuntimeConfig } from '../config.js';
 import { FileStore } from '../stores/file-store.js';
 import { createApp } from '../app.js';
@@ -93,6 +94,43 @@ test('requires an admin token header and ignores query-string tokens', async () 
   assert.equal(noToken.status, 401);
   const queryToken = await request(`/api/admin/applications?token=${encodeURIComponent(testConfig.adminToken)}`);
   assert.equal(queryToken.status, 401);
+});
+
+test('exposes the database-backed current cohort and lets an admin change it', async () => {
+  const original = await store.getCurrentCohort();
+  const alternate = {
+    ...testConfig.program.currentCohort,
+    id: crypto.randomUUID(),
+    slug: 'fall-2026',
+    name: 'Fall 2026 Interest List',
+    isCurrent: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  await store.mutate(state => state.cohorts.push(alternate));
+
+  const list = await request('/api/admin/cohorts', { headers: { 'x-admin-token': testConfig.adminToken } });
+  assert.equal(list.status, 200);
+  assert.equal((await list.json()).count, 2);
+
+  const update = await request(`/api/admin/cohorts/${alternate.id}/current`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', 'x-admin-token': testConfig.adminToken },
+    body: '{}'
+  });
+  assert.equal(update.status, 200);
+  assert.equal((await update.json()).cohort.slug, alternate.slug);
+
+  const program = await request('/api/program');
+  assert.equal(program.status, 200);
+  assert.equal((await program.json()).currentCohort.slug, alternate.slug);
+
+  const restore = await request(`/api/admin/cohorts/${original.id}/current`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', 'x-admin-token': testConfig.adminToken },
+    body: '{}'
+  });
+  assert.equal(restore.status, 200);
 });
 
 test('rejects invalid application fields and consent', async () => {
@@ -226,7 +264,9 @@ test('allows authorized status changes and records metrics', async () => {
   assert.equal((await response.json()).application.status, 'reviewing');
   const metrics = await request('/api/admin/metrics', { headers: { 'x-admin-token': testConfig.adminToken } });
   assert.equal(metrics.status, 200);
-  assert.equal((await metrics.json()).metrics.byStatus.reviewing, 1);
+  const metricBody = await metrics.json();
+  assert.equal(metricBody.metrics.byStatus.reviewing, 1);
+  assert.equal(metricBody.metrics.byCohort['interest-2026'], 2);
 });
 
 test('uses email verification before deleting matching records', async () => {

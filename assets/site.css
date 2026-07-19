@@ -350,11 +350,30 @@ h3 { margin: 0 0 .65rem; font-size: 1.45rem; letter-spacing: -.025em; }
 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.5rem 0; }
 .metric { padding: 1rem; border-top: 4px solid var(--teal); background: var(--surface); }
 .metric strong { display: block; font: 800 2rem var(--mono); }
+.cohort-console {
+  margin: 1.8rem 0;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  box-shadow: 8px 8px 0 var(--teal);
+}
+.cohort-console h2 { margin: 0 0 .5rem; font-size: clamp(1.8rem, 4vw, 3rem); }
+.cohort-console > div:first-child { max-width: 760px; }
+.cohort-control { display: flex; flex-wrap: wrap; gap: .8rem; align-items: end; margin-top: 1.2rem; }
+.cohort-control .field { min-width: min(100%, 440px); margin: 0; }
+.cohort-ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .75rem; margin-top: 1.2rem; }
+.cohort-ledger-item { position: relative; padding: 1rem; border: 1px solid var(--line); background: var(--paper); }
+.cohort-ledger-item.is-current { border: 2px solid var(--teal); background: #e3efed; }
+.cohort-ledger-item p { margin: 0 0 .35rem; color: var(--teal); font: 800 .64rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.cohort-ledger-item h3 { min-height: 2.2em; margin: 0 0 .8rem; font-size: 1rem; }
+.cohort-ledger-item strong { display: block; font: 800 2rem var(--mono); }
+.cohort-ledger-item span { color: var(--ink-soft); font-size: .76rem; }
 .table-wrap { overflow: auto; border: 1px solid var(--line); background: var(--surface); }
 table { width: 100%; border-collapse: collapse; font-size: .78rem; }
 th, td { padding: .72rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { position: sticky; top: 0; background: var(--ink); color: white; font: 800 .68rem var(--mono); text-transform: uppercase; }
 td select { min-width: 120px; padding: .35rem; }
+.table-meta { color: var(--ink-soft); font: .68rem var(--mono); }
 .application-details { min-width: 230px; max-width: 360px; }
 .application-details summary { cursor: pointer; color: var(--blue); font-weight: 800; }
 .application-details dl { margin: .8rem 0 0; }

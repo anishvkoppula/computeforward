@@ -7,6 +7,11 @@ const rows = document.querySelector('[data-application-rows]');
 const deletionRows = document.querySelector('[data-deletion-rows]');
 const statusFilter = document.querySelector('[data-status-filter]');
 const levelFilter = document.querySelector('[data-level-filter]');
+const cohortFilter = document.querySelector('[data-cohort-filter]');
+const currentCohortSelect = document.querySelector('[data-current-cohort]');
+const setCurrentCohortButton = document.querySelector('[data-set-current-cohort]');
+const cohortStatus = document.querySelector('[data-cohort-status]');
+const cohortLedger = document.querySelector('[data-cohort-ledger]');
 const STATUSES = ['submitted', 'reviewing', 'contacted', 'accepted', 'enrolled', 'completed', 'waitlisted', 'declined', 'withdrawn'];
 const EXPERIENCE_LABELS = {
   none: 'No experience yet',
@@ -16,6 +21,7 @@ const EXPERIENCE_LABELS = {
   'not-collected': 'Not collected'
 };
 let applications = [];
+let cohorts = [];
 let adminToken = sessionStorage.getItem('cf_admin_token') || '';
 
 async function api(path, options = {}) {
@@ -73,8 +79,20 @@ function backgroundCell(application) {
 function filteredApplications() {
   return applications.filter(application =>
     (!statusFilter.value || application.status === statusFilter.value) &&
-    (!levelFilter.value || application.level === levelFilter.value)
+    (!levelFilter.value || application.level === levelFilter.value) &&
+    (!cohortFilter.value || application.cohort.slug === cohortFilter.value)
   );
+}
+
+function cohortCell(cohort) {
+  const element = document.createElement('td');
+  const name = document.createElement('strong');
+  name.textContent = cohort.name;
+  const detail = document.createElement('span');
+  detail.className = 'table-meta';
+  detail.textContent = cohort.slug;
+  element.append(name, document.createElement('br'), detail);
+  return element;
 }
 
 function renderApplications() {
@@ -85,6 +103,7 @@ function renderApplications() {
     row.append(mailCell(application.applicant.name, application.applicant.email));
     row.append(mailCell(application.applicant.guardianName, application.applicant.guardianEmail));
     row.append(cell(`${application.applicant.grade || '—'}\n${application.applicant.ageRange || '—'}`));
+    row.append(cohortCell(application.cohort));
     row.append(cell(application.level));
     row.append(backgroundCell(application));
     const statusCell = document.createElement('td');
@@ -107,8 +126,33 @@ function renderApplications() {
     rows.append(row);
   }
   if (!rows.children.length) {
-    const row = document.createElement('tr'); const empty = cell('No applications match this view.'); empty.colSpan = 10; row.append(empty); rows.append(row);
+    const row = document.createElement('tr'); const empty = cell('No applications match this view.'); empty.colSpan = 11; row.append(empty); rows.append(row);
   }
+}
+
+function renderCohorts() {
+  const current = cohorts.find(cohort => cohort.isCurrent);
+  currentCohortSelect.replaceChildren(...cohorts.map(cohort => {
+    const option = new Option(`${cohort.name} · ${cohort.applicationCount} application${cohort.applicationCount === 1 ? '' : 's'}`, cohort.id);
+    option.selected = cohort.isCurrent;
+    return option;
+  }));
+  setCurrentCohortButton.disabled = !currentCohortSelect.value || currentCohortSelect.value === current?.id;
+  cohortFilter.replaceChildren(new Option('All cohorts', ''), ...cohorts.map(cohort => new Option(cohort.name, cohort.slug)));
+  cohortLedger.replaceChildren(...cohorts.map(cohort => {
+    const item = document.createElement('article');
+    item.className = `cohort-ledger-item${cohort.isCurrent ? ' is-current' : ''}`;
+    const label = document.createElement('p');
+    label.textContent = cohort.isCurrent ? 'Current intake' : cohort.status;
+    const title = document.createElement('h3');
+    title.textContent = cohort.name;
+    const count = document.createElement('strong');
+    count.textContent = String(cohort.applicationCount);
+    const detail = document.createElement('span');
+    detail.textContent = `application${cohort.applicationCount === 1 ? '' : 's'} · ${cohort.applicationsOpen ? 'open' : 'closed'}`;
+    item.append(label, title, count, detail);
+    return item;
+  }));
 }
 
 function renderDeletions(requests) {
@@ -123,17 +167,36 @@ function renderDeletions(requests) {
 
 async function loadDashboard() {
   dashboardStatus.textContent = 'Loading protected application data…';
-  const [applicationResult, metricsResult, deletionResult] = await Promise.all([
-    api('/api/admin/applications'), api('/api/admin/metrics'), api('/api/admin/deletion-requests')
+  const [applicationResult, metricsResult, deletionResult, cohortResult] = await Promise.all([
+    api('/api/admin/applications'), api('/api/admin/metrics'), api('/api/admin/deletion-requests'), api('/api/admin/cohorts')
   ]);
   applications = applicationResult.applications;
+  cohorts = cohortResult.cohorts;
   const levels = [...new Set(applications.map(application => application.level))].sort();
   levelFilter.replaceChildren(new Option('All levels', ''), ...levels.map(level => new Option(level, level)));
   document.querySelector('[data-metric="total"]').textContent = metricsResult.metrics.total;
   document.querySelector('[data-metric="submitted"]').textContent = metricsResult.metrics.byStatus.submitted || 0;
   document.querySelector('[data-metric="failed"]').textContent = metricsResult.metrics.confirmation.failed || 0;
-  renderApplications(); renderDeletions(deletionResult.requests);
+  renderCohorts(); renderApplications(); renderDeletions(deletionResult.requests);
   dashboardStatus.textContent = `Loaded ${applicationResult.count} application(s).`;
+}
+
+async function setCurrentCohort() {
+  const id = currentCohortSelect.value;
+  if (!id) return;
+  setCurrentCohortButton.disabled = true;
+  cohortStatus.className = 'form-status';
+  cohortStatus.textContent = 'Updating where new applications are assigned…';
+  try {
+    const result = await api(`/api/admin/cohorts/${encodeURIComponent(id)}/current`, { method: 'PATCH', body: '{}' });
+    cohortStatus.textContent = `${result.cohort.name} is now the current application cohort.`;
+    await loadDashboard();
+  } catch (error) {
+    cohortStatus.textContent = error.message;
+    cohortStatus.className = 'form-status error';
+  } finally {
+    setCurrentCohortButton.disabled = currentCohortSelect.value === cohorts.find(cohort => cohort.isCurrent)?.id;
+  }
 }
 
 async function updateStatus(id, status, select) {
@@ -162,15 +225,21 @@ loginForm.addEventListener('submit', async event => {
 
 document.querySelector('[data-refresh]').addEventListener('click', () => loadDashboard().catch(error => { dashboardStatus.textContent = error.message; }));
 document.querySelector('[data-logout]').addEventListener('click', () => { sessionStorage.removeItem('cf_admin_token'); adminToken = ''; dashboard.hidden = true; loginPanel.hidden = false; loginForm.reset(); });
-statusFilter.addEventListener('change', renderApplications); levelFilter.addEventListener('change', renderApplications);
+statusFilter.addEventListener('change', renderApplications);
+levelFilter.addEventListener('change', renderApplications);
+cohortFilter.addEventListener('change', renderApplications);
+currentCohortSelect.addEventListener('change', () => {
+  setCurrentCohortButton.disabled = currentCohortSelect.value === cohorts.find(cohort => cohort.isCurrent)?.id;
+});
+setCurrentCohortButton.addEventListener('click', setCurrentCohort);
 document.querySelector('[data-export]').addEventListener('click', () => {
-  const headers = ['reference','name','email','guardian_name','guardian_email','grade','age_range','level','experience_level','coding_tools','project_experience','learning_goals','status','confirmation','submitted_at'];
+  const headers = ['reference','name','email','guardian_name','guardian_email','grade','age_range','cohort_name','cohort_slug','level','experience_level','coding_tools','project_experience','learning_goals','status','confirmation','submitted_at'];
   const quote = value => {
     let safeValue = String(value ?? '');
     if (/^[=+\-@\t\r]/.test(safeValue)) safeValue = `'${safeValue}`;
     return `"${safeValue.replaceAll('"', '""')}"`;
   };
-  const lines = [headers.join(','), ...filteredApplications().map(a => [a.reference,a.applicant.name,a.applicant.email,a.applicant.guardianName,a.applicant.guardianEmail,a.applicant.grade,a.applicant.ageRange,a.level,a.experienceLevel,a.codingTools,a.projectExperience,a.learningGoals,a.status,a.confirmationStatus,a.submittedAt].map(quote).join(','))];
+  const lines = [headers.join(','), ...filteredApplications().map(a => [a.reference,a.applicant.name,a.applicant.email,a.applicant.guardianName,a.applicant.guardianEmail,a.applicant.grade,a.applicant.ageRange,a.cohort.name,a.cohort.slug,a.level,a.experienceLevel,a.codingTools,a.projectExperience,a.learningGoals,a.status,a.confirmationStatus,a.submittedAt].map(quote).join(','))];
   const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   const link = document.createElement('a'); link.href = url; link.download = `computeforward-applications-${new Date().toISOString().slice(0,10)}.csv`; link.click(); URL.revokeObjectURL(url);
 });

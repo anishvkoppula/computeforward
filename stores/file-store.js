@@ -43,9 +43,11 @@ export class FileStore {
   seedCohort(state) {
     const current = this.config.program.currentCohort;
     const existing = state.cohorts.find(cohort => cohort.slug === current.slug);
+    const hasCurrent = state.cohorts.some(cohort => cohort.isCurrent);
     const record = {
       id: existing?.id || crypto.randomUUID(),
       ...current,
+      isCurrent: existing?.isCurrent ?? !hasCurrent,
       updatedAt: new Date().toISOString(),
       createdAt: existing?.createdAt || new Date().toISOString()
     };
@@ -148,6 +150,32 @@ export class FileStore {
   async health() {
     await this.read();
     return { ok: true, store: this.kind };
+  }
+
+  async getCurrentCohort() {
+    const state = await this.read();
+    return state.cohorts.find(cohort => cohort.isCurrent) || null;
+  }
+
+  async listCohorts() {
+    const state = await this.read();
+    return state.cohorts
+      .map(cohort => ({
+        ...cohort,
+        applicationCount: state.applications.filter(application => application.cohortId === cohort.id).length
+      }))
+      .sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent) || new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  async setCurrentCohort(id) {
+    return this.mutate(state => {
+      const target = state.cohorts.find(cohort => cohort.id === id);
+      if (!target) return null;
+      const updatedAt = new Date().toISOString();
+      for (const cohort of state.cohorts) cohort.isCurrent = cohort.id === id;
+      target.updatedAt = updatedAt;
+      return { ...target };
+    });
   }
 
   async createApplication(record) {
@@ -358,13 +386,17 @@ export class FileStore {
     const state = await this.read();
     const byStatus = {};
     const byLevel = {};
+    const byCohort = {};
     const confirmation = {};
     for (const application of state.applications) {
       byStatus[application.status] = (byStatus[application.status] || 0) + 1;
       byLevel[application.level] = (byLevel[application.level] || 0) + 1;
+      const cohort = state.cohorts.find(item => item.id === application.cohortId);
+      if (cohort) byCohort[cohort.slug] = (byCohort[cohort.slug] || 0) + 1;
       confirmation[application.confirmationStatus] = (confirmation[application.confirmationStatus] || 0) + 1;
     }
-    return { total: state.applications.length, byStatus, byLevel, confirmation };
+    for (const cohort of state.cohorts) byCohort[cohort.slug] ??= 0;
+    return { total: state.applications.length, byStatus, byLevel, byCohort, confirmation };
   }
 
   async purgeExpiredRecords({ now = new Date(), unsuccessfulMonths, enrolledMonths }) {

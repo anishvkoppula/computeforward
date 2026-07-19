@@ -69,6 +69,12 @@ export function createApp({ store, mailer, config }) {
   const deletionLimiter = limiter({ windowMs: 60 * 60_000, limit: config.deletionRateLimit, message: 'Too many privacy requests. Please wait before trying again.' });
   app.use(globalLimiter);
 
+  async function getProgram() {
+    const currentCohort = await store.getCurrentCohort();
+    if (!currentCohort) throw new Error('No current application cohort is configured.');
+    return { ...config.program, currentCohort };
+  }
+
   app.use('/assets', express.static(config.assetsDir, {
     dotfiles: 'deny',
     fallthrough: true,
@@ -99,7 +105,7 @@ export function createApp({ store, mailer, config }) {
     const health = await store.health();
     res.json({ ok: true, store: health.store, emailConfigured: mailer.configured });
   }));
-  app.get('/api/program', (_req, res) => res.json(config.program));
+  app.get('/api/program', asyncRoute(async (_req, res) => res.json(await getProgram())));
 
   function verifyOrigin(req, res, next) {
     const origin = req.get('origin');
@@ -135,13 +141,14 @@ export function createApp({ store, mailer, config }) {
   }
 
   app.post('/api/apply', applyLimiter, verifyOrigin, asyncRoute(async (req, res) => {
-    if (!config.program.currentCohort.applicationsOpen) {
+    const program = await getProgram();
+    if (!program.currentCohort.applicationsOpen) {
       const message = 'Applications are not open right now. Please use the contact email for current information.';
       if (wantsHtml(req)) return res.status(403).send(messagePage({ title: 'Applications are paused.', eyebrow: 'Enrollment', message }));
       return res.status(403).json({ success: false, error: message, code: 'APPLICATIONS_CLOSED' });
     }
 
-    const { input, errors, valid } = validateApplication(req.body || {}, config.program);
+    const { input, errors, valid } = validateApplication(req.body || {}, program);
     if (input.website) {
       return res.status(202).json({ success: true, message: 'Thank you. Your request has been received.' });
     }
@@ -163,7 +170,7 @@ export function createApp({ store, mailer, config }) {
       id: crypto.randomUUID(),
       reference: applicationReference(),
       ...input,
-      policyVersions: config.program.policyVersions,
+      policyVersions: program.policyVersions,
       ipHash: hashValue(req.ip || 'unknown', config.ipHashSecret || 'development-only'),
       source: wantsHtml(req) ? 'web-form-no-js' : 'web-form',
       submittedAt
@@ -278,6 +285,19 @@ export function createApp({ store, mailer, config }) {
     const applications = await store.listApplications();
     res.setHeader('cache-control', 'no-store');
     res.json({ success: true, count: applications.length, applications });
+  }));
+  app.get('/api/admin/cohorts', asyncRoute(async (_req, res) => {
+    const cohorts = await store.listCohorts();
+    res.setHeader('cache-control', 'no-store');
+    res.json({ success: true, count: cohorts.length, cohorts });
+  }));
+  app.patch('/api/admin/cohorts/:id/current', asyncRoute(async (req, res) => {
+    const id = validateId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid cohort.' });
+    const cohort = await store.setCurrentCohort(id);
+    if (!cohort) return res.status(404).json({ success: false, error: 'Cohort not found.' });
+    await store.recordAudit({ actor: 'admin', action: 'current_cohort_changed', targetType: 'cohort', targetId: id, requestId: req.requestId });
+    res.json({ success: true, cohort });
   }));
   app.patch('/api/admin/applications/:id/status', asyncRoute(async (req, res) => {
     const id = validateId(req.params.id);

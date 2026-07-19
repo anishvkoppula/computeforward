@@ -4,7 +4,7 @@
 |---|---|
 | **Organization** | Compute Forward |
 | **Founded by** | Anish Koppula and Kaushik Atla |
-| **Website** | https://compute-forward.vercel.app/ |
+| **Website** | https://computeforward-beige.vercel.app/ |
 | **Contact** | anishkoppula@gmail.com · kaushik.atla@gmail.com |
 
 ---

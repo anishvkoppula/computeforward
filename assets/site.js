@@ -19,6 +19,31 @@ const applicationForm = document.querySelector('#application-form');
 if (applicationForm) {
   const startedAt = applicationForm.querySelector('[name="startedAt"]');
   if (startedAt) startedAt.value = new Date().toISOString();
+  const cohortInput = applicationForm.querySelector('[name="cohortSlug"]');
+  const cohortName = document.querySelector('[data-current-cohort-name]');
+  const submitButton = applicationForm.querySelector('[type="submit"]');
+  const formStatus = applicationForm.querySelector('[data-form-status]');
+
+  fetch('/api/program', { headers: { accept: 'application/json' } })
+    .then(response => {
+      if (!response.ok) throw new Error('Application service unavailable.');
+      return response.json();
+    })
+    .then(program => {
+      const cohort = program.currentCohort;
+      if (cohortInput) cohortInput.value = cohort.slug;
+      if (cohortName) cohortName.textContent = cohort.name;
+      if (!cohort.applicationsOpen) {
+        submitButton.disabled = true;
+        formStatus.className = 'form-status error';
+        formStatus.textContent = 'Applications are currently paused. Please contact the founders for current information.';
+      }
+    })
+    .catch(() => {
+      submitButton.disabled = true;
+      formStatus.className = 'form-status error';
+      formStatus.textContent = 'We could not confirm the current application period. Please try again later.';
+    });
 
   const ageRange = applicationForm.querySelector('[name="ageRange"]');
   const guardianPanel = applicationForm.querySelector('[data-guardian-fields]');
@@ -36,7 +61,7 @@ if (applicationForm) {
 
   applicationForm.addEventListener('submit', async event => {
     event.preventDefault();
-    const button = applicationForm.querySelector('[type="submit"]');
+    const button = submitButton;
     const status = applicationForm.querySelector('[data-form-status]');
     const success = document.querySelector('[data-application-success]');
     const data = Object.fromEntries(new FormData(applicationForm));

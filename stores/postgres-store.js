@@ -3,6 +3,31 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
+function mapCohort(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    status: row.status,
+    applicationsOpen: row.applications_open,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    applicationDeadline: row.application_deadline,
+    meetingSchedule: row.meeting_schedule,
+    timezone: row.timezone,
+    weeklyWorkload: row.weekly_workload,
+    deliveryFormat: row.delivery_format,
+    seatLimit: row.seat_limit,
+    costCents: row.cost_cents,
+    statusMessage: row.status_message,
+    isCurrent: row.is_current,
+    applicationCount: Number(row.application_count || 0),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 function mapApplication(row) {
   if (!row) return null;
   return {
@@ -65,28 +90,77 @@ export class PostgresStore {
       throw new Error('Database schema is missing. Run `npm run db:migrate` before starting the service.');
     }
     const cohort = this.config.program.currentCohort;
-    await this.pool.query(`
-      INSERT INTO cohorts (
-        id, slug, name, status, applications_open, start_date, end_date, application_deadline,
-        meeting_schedule, timezone, weekly_workload, delivery_format, seat_limit, cost_cents, status_message
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-      ON CONFLICT (slug) DO UPDATE SET
-        name=EXCLUDED.name, status=EXCLUDED.status, applications_open=EXCLUDED.applications_open,
-        start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date,
-        application_deadline=EXCLUDED.application_deadline, meeting_schedule=EXCLUDED.meeting_schedule,
-        timezone=EXCLUDED.timezone, weekly_workload=EXCLUDED.weekly_workload,
-        delivery_format=EXCLUDED.delivery_format, seat_limit=EXCLUDED.seat_limit,
-        cost_cents=EXCLUDED.cost_cents, status_message=EXCLUDED.status_message, updated_at=now()`, [
-      crypto.randomUUID(), cohort.slug, cohort.name, cohort.status, cohort.applicationsOpen,
-      cohort.startDate, cohort.endDate, cohort.applicationDeadline, cohort.meetingSchedule,
-      cohort.timezone, cohort.weeklyWorkload, cohort.deliveryFormat, cohort.seatLimit,
-      cohort.costCents, cohort.statusMessage
-    ]);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('LOCK TABLE cohorts IN SHARE ROW EXCLUSIVE MODE');
+      await client.query(`
+        INSERT INTO cohorts (
+          id, slug, name, status, applications_open, start_date, end_date, application_deadline,
+          meeting_schedule, timezone, weekly_workload, delivery_format, seat_limit, cost_cents, status_message
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        ON CONFLICT (slug) DO UPDATE SET
+          name=EXCLUDED.name, status=EXCLUDED.status, applications_open=EXCLUDED.applications_open,
+          start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date,
+          application_deadline=EXCLUDED.application_deadline, meeting_schedule=EXCLUDED.meeting_schedule,
+          timezone=EXCLUDED.timezone, weekly_workload=EXCLUDED.weekly_workload,
+          delivery_format=EXCLUDED.delivery_format, seat_limit=EXCLUDED.seat_limit,
+          cost_cents=EXCLUDED.cost_cents, status_message=EXCLUDED.status_message, updated_at=now()`, [
+        crypto.randomUUID(), cohort.slug, cohort.name, cohort.status, cohort.applicationsOpen,
+        cohort.startDate, cohort.endDate, cohort.applicationDeadline, cohort.meetingSchedule,
+        cohort.timezone, cohort.weeklyWorkload, cohort.deliveryFormat, cohort.seatLimit,
+        cohort.costCents, cohort.statusMessage
+      ]);
+      await client.query(`
+        UPDATE cohorts SET is_current=true, updated_at=now()
+        WHERE slug=$1 AND NOT EXISTS (SELECT 1 FROM cohorts WHERE is_current=true)`, [cohort.slug]);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async health() {
     await this.pool.query('SELECT 1');
     return { ok: true, store: this.kind };
+  }
+
+  async getCurrentCohort() {
+    const result = await this.pool.query('SELECT * FROM cohorts WHERE is_current=true LIMIT 1');
+    return mapCohort(result.rows[0]);
+  }
+
+  async listCohorts() {
+    const result = await this.pool.query(`
+      SELECT c.*, count(a.id)::int AS application_count
+      FROM cohorts c LEFT JOIN applications a ON a.cohort_id=c.id
+      GROUP BY c.id ORDER BY c.is_current DESC, c.created_at DESC`);
+    return result.rows.map(mapCohort);
+  }
+
+  async setCurrentCohort(id) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('LOCK TABLE cohorts IN SHARE ROW EXCLUSIVE MODE');
+      const target = await client.query('SELECT id FROM cohorts WHERE id=$1', [id]);
+      if (!target.rows[0]) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      await client.query('UPDATE cohorts SET is_current=false WHERE is_current=true');
+      const result = await client.query('UPDATE cohorts SET is_current=true, updated_at=now() WHERE id=$1 RETURNING *', [id]);
+      await client.query('COMMIT');
+      return mapCohort(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async createApplication(record) {
@@ -289,16 +363,19 @@ export class PostgresStore {
   }
 
   async metrics() {
-    const [total, statuses, levels, confirmations] = await Promise.all([
+    const [total, statuses, levels, cohorts, confirmations] = await Promise.all([
       this.pool.query('SELECT count(*)::int AS count FROM applications'),
       this.pool.query('SELECT status, count(*)::int AS count FROM applications GROUP BY status'),
       this.pool.query('SELECT level, count(*)::int AS count FROM applications GROUP BY level'),
+      this.pool.query(`SELECT c.slug, count(a.id)::int AS count FROM cohorts c
+        LEFT JOIN applications a ON a.cohort_id=c.id GROUP BY c.slug`),
       this.pool.query('SELECT confirmation_status, count(*)::int AS count FROM applications GROUP BY confirmation_status')
     ]);
     return {
       total: total.rows[0].count,
       byStatus: Object.fromEntries(statuses.rows.map(row => [row.status, row.count])),
       byLevel: Object.fromEntries(levels.rows.map(row => [row.level, row.count])),
+      byCohort: Object.fromEntries(cohorts.rows.map(row => [row.slug, row.count])),
       confirmation: Object.fromEntries(confirmations.rows.map(row => [row.confirmation_status, row.count]))
     };
   }
