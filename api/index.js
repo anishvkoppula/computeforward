@@ -18,6 +18,22 @@ async function getApp() {
 }
 
 export default async function handler(req, res) {
-  const app = await getApp();
-  return app(req, res);
+  try {
+    const app = await getApp();
+    return app(req, res);
+  } catch (error) {
+    appPromise = undefined;
+    console.error(JSON.stringify({
+      event: 'api_initialization_failed',
+      code: error?.code || 'STARTUP_ERROR',
+      message: error?.message || 'The API could not initialize.'
+    }));
+    if (res.headersSent) return;
+    res.setHeader('cache-control', 'no-store');
+    return res.status(503).json({
+      success: false,
+      error: 'The service is temporarily unavailable because it could not start.',
+      code: 'SERVICE_UNAVAILABLE'
+    });
+  }
 }

@@ -2,7 +2,10 @@
 
 Compute Forward is a free, student-led, cohort-based computer science education program. This repository contains the public program site and the secure application intake and admissions service.
 
-The current public URL is <https://computeforward-beige.vercel.app/>. Do not promote an active cohort until the operational launch gates in [`docs/roadmap.md`](./docs/roadmap.md) are complete.
+- Live website: <https://computeforward-beige.vercel.app/>
+- GitHub repository: <https://github.com/anishvkoppula/computeforward>
+
+Do not promote an active cohort until the operational launch gates in [`docs/roadmap.md`](./docs/roadmap.md) are complete.
 
 ## What is implemented
 

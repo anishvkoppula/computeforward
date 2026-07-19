@@ -91,14 +91,34 @@ test('enhanced application flow reports storage and email separately', async ({ 
   await expect(success.locator('[data-confirmation-note]')).toContainText('stored');
 });
 
-test('admin token stays in session storage and unlocks protected data', async ({ page }) => {
+test('admin login stays legible, protects the token, and reports startup failures', async ({ page }) => {
   await page.goto('/admin');
+
+  const titleLines = await page.getByRole('heading', { name: 'Admissions dashboard' }).evaluate(title => {
+    const range = document.createRange();
+    range.selectNodeContents(title);
+    return new Set([...range.getClientRects()].map(rect => Math.round(rect.top))).size;
+  });
+  expect(titleLines).toBeLessThanOrEqual(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)).toBe(false);
+
   await page.fill('#admin-token', 'e2e-admin-token-that-is-longer-than-thirty-two-characters');
   await page.getByRole('button', { name: 'Open dashboard' }).click();
   await expect(page.locator('[data-dashboard]')).toBeVisible();
   await expect(page.locator('[data-login-panel]')).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem('cf_admin_token'))).toBeNull();
   expect(await page.evaluate(() => sessionStorage.getItem('cf_admin_token'))).toBeTruthy();
+
+  await page.getByRole('button', { name: 'Lock dashboard' }).click();
+  await page.route('**/api/admin/metrics', route => route.fulfill({
+    status: 503,
+    contentType: 'application/json',
+    body: JSON.stringify({ error: { message: 'Function startup failed.' } })
+  }));
+  await page.fill('#admin-token', 'admin-token-that-is-longer-than-thirty-two-characters');
+  await page.getByRole('button', { name: 'Open dashboard' }).click();
+  await expect(page.locator('[data-login-status]')).toContainText('server could not start');
+  await expect(page.locator('[data-login-status]')).not.toContainText('[object Object]');
 });
 
 test('mobile navigation communicates its state', async ({ page }, testInfo) => {

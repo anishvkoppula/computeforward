@@ -345,6 +345,15 @@ h3 { margin: 0 0 .65rem; font-size: 1.45rem; letter-spacing: -.025em; }
 
 .admin-shell { max-width: 1380px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
 .admin-login { max-width: 620px; margin: 4rem auto; }
+.admin-login h1 {
+  max-width: 100%;
+  margin: .15rem 0 1.25rem;
+  font-size: clamp(3rem, 7vw, 5.1rem);
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: wrap;
+}
+.admin-login > p:not(.eyebrow) { max-width: 54ch; }
 .admin-toolbar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin: 1.5rem 0; }
 .admin-toolbar .field { margin: 0; min-width: 210px; }
 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.5rem 0; }
@@ -407,6 +416,9 @@ td select { min-width: 120px; padding: .35rem; }
   .site-nav[data-open="true"] { display: flex; }
   .hero { padding-top: 4rem; }
   h1 { font-size: clamp(2.8rem, 15vw, 4.8rem); }
+  .admin-shell { padding: 1rem 1rem 4rem; }
+  .admin-login { margin: 1.5rem auto; box-shadow: 6px 6px 0 var(--orange); }
+  .admin-login h1 { font-size: clamp(2.65rem, 11vw, 4.4rem); }
   .form-grid { grid-template-columns: 1fr; }
   .field-full, .guardian-fields, .application-questions { grid-column: 1; }
   .footer-inner { grid-template-columns: 1fr; }

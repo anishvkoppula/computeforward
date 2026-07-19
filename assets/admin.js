@@ -24,13 +24,45 @@ let applications = [];
 let cohorts = [];
 let adminToken = sessionStorage.getItem('cf_admin_token') || '';
 
+function messageFromPayload(payload) {
+  if (typeof payload === 'string') return payload.trim();
+  if (!payload || typeof payload !== 'object') return '';
+  if (Array.isArray(payload)) {
+    return payload.map(messageFromPayload).find(Boolean) || '';
+  }
+  for (const key of ['message', 'error', 'detail', 'details']) {
+    const message = messageFromPayload(payload[key]);
+    if (message) return message;
+  }
+  return '';
+}
+
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { 'content-type': 'application/json', accept: 'application/json', 'x-admin-token': adminToken, ...(options.headers || {}) }
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(response.status === 401 ? 'The admin token was not accepted.' : (result.error || 'Admin request failed.'));
+  let response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers: { 'content-type': 'application/json', accept: 'application/json', 'x-admin-token': adminToken, ...(options.headers || {}) }
+    });
+  } catch {
+    throw new Error('The admin service could not be reached. Check your connection and try again.');
+  }
+
+  const body = await response.text();
+  let result;
+  try {
+    result = body ? JSON.parse(body) : null;
+  } catch {
+    result = body;
+  }
+
+  if (!response.ok) {
+    let message = messageFromPayload(result);
+    if (response.status === 401) message = 'The admin token was not accepted.';
+    else if (response.status >= 500) message = 'The admin service is unavailable because the server could not start. Check the deployment configuration and try again.';
+    throw new Error(message || `Admin request failed (${response.status}).`);
+  }
+  if (!result || typeof result !== 'object') throw new Error('The admin service returned an invalid response.');
   return result;
 }
 
@@ -166,6 +198,7 @@ function renderDeletions(requests) {
 }
 
 async function loadDashboard() {
+  dashboardStatus.className = 'form-status';
   dashboardStatus.textContent = 'Loading protected application data…';
   const [applicationResult, metricsResult, deletionResult, cohortResult] = await Promise.all([
     api('/api/admin/applications'), api('/api/admin/metrics'), api('/api/admin/deletion-requests'), api('/api/admin/cohorts')
@@ -218,12 +251,32 @@ async function resendConfirmation(id, button) {
 }
 
 loginForm.addEventListener('submit', async event => {
-  event.preventDefault(); adminToken = new FormData(loginForm).get('token').trim(); loginStatus.textContent = 'Verifying…';
-  try { await api('/api/admin/metrics'); sessionStorage.setItem('cf_admin_token', adminToken); loginPanel.hidden = true; dashboard.hidden = false; await loadDashboard(); }
-  catch (error) { loginStatus.textContent = error.message; loginStatus.className = 'form-status error'; }
+  event.preventDefault();
+  adminToken = new FormData(loginForm).get('token').trim();
+  const submitButton = loginForm.querySelector('button[type="submit"]');
+  loginStatus.className = 'form-status';
+  loginStatus.textContent = 'Verifying…';
+  loginForm.setAttribute('aria-busy', 'true');
+  submitButton.disabled = true;
+  try {
+    await api('/api/admin/metrics');
+    sessionStorage.setItem('cf_admin_token', adminToken);
+    loginPanel.hidden = true;
+    dashboard.hidden = false;
+    await loadDashboard();
+  } catch (error) {
+    loginStatus.textContent = error.message;
+    loginStatus.className = 'form-status error';
+  } finally {
+    loginForm.removeAttribute('aria-busy');
+    submitButton.disabled = false;
+  }
 });
 
-document.querySelector('[data-refresh]').addEventListener('click', () => loadDashboard().catch(error => { dashboardStatus.textContent = error.message; }));
+document.querySelector('[data-refresh]').addEventListener('click', () => loadDashboard().catch(error => {
+  dashboardStatus.textContent = error.message;
+  dashboardStatus.className = 'form-status error';
+}));
 document.querySelector('[data-logout]').addEventListener('click', () => { sessionStorage.removeItem('cf_admin_token'); adminToken = ''; dashboard.hidden = true; loginPanel.hidden = false; loginForm.reset(); });
 statusFilter.addEventListener('change', renderApplications);
 levelFilter.addEventListener('change', renderApplications);
