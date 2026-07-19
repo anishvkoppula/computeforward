@@ -82,3 +82,29 @@ test('internal application alert goes only to the configured organization inbox'
   assert.match(delivered.html, /computeforward123@gmail\.com/);
   assert.doesNotMatch(delivered.html, /anishkoppula@gmail\.com|kaushik\.atla@gmail\.com/);
 });
+
+test('acceptance email goes to the student and guardian without promising a scheduled seat', async () => {
+  let delivered;
+  const config = {
+    publicOrigin: 'https://example.test',
+    admissionsEmails: ['computeforward123@gmail.com'],
+    smtp: { host: 'smtp.example.test', port: 587, secure: false, user: 'u', pass: 'p', from: 'from@example.test' }
+  };
+  const mailer = createMailer(config, {
+    createTransport: () => ({ async sendMail(options) { delivered = options; }, async verify() { return true; } })
+  });
+
+  await mailer.sendAcceptanceNotification({
+    reference: 'CF-TEST-ACCEPTED',
+    level: 'Level 2 — Applied AI & Machine Learning',
+    applicant: {
+      name: 'Accepted Student', email: 'student@example.test',
+      guardianName: 'Guardian', guardianEmail: 'guardian@example.test'
+    }
+  });
+
+  assert.deepEqual(delivered.to, ['student@example.test', 'guardian@example.test']);
+  assert.match(delivered.subject, /Application accepted/);
+  assert.match(delivered.html, /application has been accepted/i);
+  assert.match(delivered.text, /does not yet assign a scheduled cohort seat/i);
+});

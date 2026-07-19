@@ -14,7 +14,7 @@ Do not promote an active cohort until the operational launch gates in [`docs/roa
 - PostgreSQL production storage for cohorts, applicants, consents, applications, statuses, notification delivery, deletion requests, and admin audit events.
 - Development-only file storage with atomic writes, backups, and one-time preservation of the old `data/applications.json` records.
 - Duplicate handling, input allowlists, request-size limits, origin checks, honeypot spam defense, and route-specific rate limiting.
-- Transactional application-copy confirmation to every student and guardian address provided, plus an internal admissions email through SMTP.
+- Transactional application-copy confirmation to every student and guardian address provided, an internal admissions alert, and an admin-confirmed acceptance email through SMTP.
 - Verified data-deletion links that remove matching applicant, application, and consent records.
 - Restricted admissions dashboard with status updates, confirmation retry, permanent application deletion with confirmation, metrics, deletion-request visibility, and explicit CSV export.
 - CSP and security headers, privacy-safe structured logs, health/readiness endpoints, optional incident webhook alerts, and production configuration gates.

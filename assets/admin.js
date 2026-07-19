@@ -59,7 +59,8 @@ async function api(path, options = {}) {
   if (!response.ok) {
     let message = messageFromPayload(result);
     if (response.status === 401) message = 'The admin token was not accepted.';
-    else if (response.status >= 500) message = 'The admin service is unavailable because the server could not start. Check the deployment configuration and try again.';
+    else if (response.status === 503 && result?.code === 'SERVICE_UNAVAILABLE') message = 'The admin service is unavailable because the server could not start. Check the deployment configuration and try again.';
+    else if (response.status >= 500 && !message) message = 'The admin service is temporarily unavailable. Try again shortly.';
     throw new Error(message || `Admin request failed (${response.status}).`);
   }
   if (!result || typeof result !== 'object') throw new Error('The admin service returned an invalid response.');
@@ -108,6 +109,26 @@ function backgroundCell(application) {
   return element;
 }
 
+function emailStatusCell(application) {
+  const element = document.createElement('td');
+  const list = document.createElement('dl');
+  list.className = 'email-status-list';
+  const statuses = [
+    ['Receipt', application.confirmationStatus || 'unknown'],
+    ['Acceptance', application.acceptanceStatus === 'not-applicable' || !application.acceptanceStatus ? 'not sent' : application.acceptanceStatus]
+  ];
+  for (const [label, value] of statuses) {
+    const term = document.createElement('dt');
+    const description = document.createElement('dd');
+    term.textContent = label;
+    description.textContent = value;
+    description.dataset.emailState = value;
+    list.append(term, description);
+  }
+  element.append(list);
+  return element;
+}
+
 function filteredApplications() {
   return applications.filter(application =>
     (!statusFilter.value || application.status === statusFilter.value) &&
@@ -148,12 +169,19 @@ function renderApplications() {
     }
     select.addEventListener('change', () => updateStatus(application.id, select.value, select));
     statusCell.append(select); row.append(statusCell);
-    row.append(cell(application.confirmationStatus));
+    row.append(emailStatusCell(application));
     row.append(cell(new Date(application.submittedAt).toLocaleString()));
     const actionCell = document.createElement('td');
     actionCell.className = 'application-actions';
+    if (application.status === 'accepted') {
+      const acceptance = document.createElement('button');
+      acceptance.type = 'button'; acceptance.className = 'button button-success button-small';
+      acceptance.textContent = application.acceptanceStatus === 'sent' ? 'Resend acceptance' : 'Send acceptance';
+      acceptance.addEventListener('click', () => sendAcceptance(application, acceptance));
+      actionCell.append(acceptance);
+    }
     const resend = document.createElement('button');
-    resend.type = 'button'; resend.className = 'button button-secondary button-small'; resend.textContent = 'Resend email';
+    resend.type = 'button'; resend.className = 'button button-secondary button-small'; resend.textContent = 'Resend receipt';
     resend.addEventListener('click', () => resendConfirmation(application.id, resend));
     const remove = document.createElement('button');
     remove.type = 'button'; remove.className = 'button button-danger button-small'; remove.textContent = 'Delete permanently';
@@ -213,7 +241,10 @@ async function loadDashboard() {
   levelFilter.replaceChildren(new Option('All levels', ''), ...levels.map(level => new Option(level, level)));
   document.querySelector('[data-metric="total"]').textContent = metricsResult.metrics.total;
   document.querySelector('[data-metric="submitted"]').textContent = metricsResult.metrics.byStatus.submitted || 0;
-  document.querySelector('[data-metric="failed"]').textContent = metricsResult.metrics.confirmation.failed || 0;
+  document.querySelector('[data-metric="failed"]').textContent =
+    (metricsResult.metrics.confirmation.failed || 0) +
+    (metricsResult.metrics.acceptance?.pending || 0) +
+    (metricsResult.metrics.acceptance?.failed || 0);
   renderCohorts(); renderApplications(); renderDeletions(deletionResult.requests);
   dashboardStatus.textContent = `Loaded ${applicationResult.count} application(s).`;
 }
@@ -242,7 +273,9 @@ async function updateStatus(id, status, select) {
     const result = await api(`/api/admin/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
     const index = applications.findIndex(application => application.id === id);
     applications[index] = result.application;
+    dashboardStatus.className = 'form-status success';
     dashboardStatus.textContent = `Updated ${result.application.reference} to ${status}.`;
+    renderApplications();
   } catch (error) { dashboardStatus.textContent = error.message; dashboardStatus.className = 'form-status error'; await loadDashboard(); }
   finally { select.disabled = false; }
 }
@@ -252,6 +285,30 @@ async function resendConfirmation(id, button) {
   try { const result = await api(`/api/admin/applications/${id}/resend-confirmation`, { method: 'POST', body: '{}' }); dashboardStatus.textContent = result.success ? 'Confirmation sent.' : 'Email is still pending; check SMTP and monitoring.'; await loadDashboard(); }
   catch (error) { dashboardStatus.textContent = error.message; dashboardStatus.className = 'form-status error'; }
   finally { button.disabled = false; }
+}
+
+async function sendAcceptance(application, button) {
+  const resend = application.acceptanceStatus === 'sent';
+  const confirmed = window.confirm(
+    `${resend ? 'Resend' : 'Send'} the acceptance email for ${application.reference}?\n\n` +
+    'It will go to the student and parent or guardian addresses on the application. It confirms acceptance, while dates and a scheduled cohort seat are confirmed separately.'
+  );
+  if (!confirmed) return;
+
+  button.disabled = true;
+  dashboardStatus.className = 'form-status';
+  dashboardStatus.textContent = `${resend ? 'Resending' : 'Sending'} acceptance for ${application.reference}…`;
+  try {
+    await api(`/api/admin/applications/${encodeURIComponent(application.id)}/send-acceptance`, { method: 'POST', body: '{}' });
+    await loadDashboard();
+    dashboardStatus.className = 'form-status success';
+    dashboardStatus.textContent = `Acceptance email sent for ${application.reference}.`;
+  } catch (error) {
+    dashboardStatus.textContent = error.message;
+    dashboardStatus.className = 'form-status error';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function deleteApplication(application, button) {
@@ -313,13 +370,13 @@ currentCohortSelect.addEventListener('change', () => {
 });
 setCurrentCohortButton.addEventListener('click', setCurrentCohort);
 document.querySelector('[data-export]').addEventListener('click', () => {
-  const headers = ['reference','name','email','guardian_name','guardian_email','grade','age_range','cohort_name','cohort_slug','level','experience_level','coding_tools','project_experience','learning_goals','status','confirmation','submitted_at'];
+  const headers = ['reference','name','email','guardian_name','guardian_email','grade','age_range','cohort_name','cohort_slug','level','experience_level','coding_tools','project_experience','learning_goals','status','application_receipt','acceptance_email','submitted_at'];
   const quote = value => {
     let safeValue = String(value ?? '');
     if (/^[=+\-@\t\r]/.test(safeValue)) safeValue = `'${safeValue}`;
     return `"${safeValue.replaceAll('"', '""')}"`;
   };
-  const lines = [headers.join(','), ...filteredApplications().map(a => [a.reference,a.applicant.name,a.applicant.email,a.applicant.guardianName,a.applicant.guardianEmail,a.applicant.grade,a.applicant.ageRange,a.cohort.name,a.cohort.slug,a.level,a.experienceLevel,a.codingTools,a.projectExperience,a.learningGoals,a.status,a.confirmationStatus,a.submittedAt].map(quote).join(','))];
+  const lines = [headers.join(','), ...filteredApplications().map(a => [a.reference,a.applicant.name,a.applicant.email,a.applicant.guardianName,a.applicant.guardianEmail,a.applicant.grade,a.applicant.ageRange,a.cohort.name,a.cohort.slug,a.level,a.experienceLevel,a.codingTools,a.projectExperience,a.learningGoals,a.status,a.confirmationStatus,a.acceptanceStatus,a.submittedAt].map(quote).join(','))];
   const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   const link = document.createElement('a'); link.href = url; link.download = `computeforward-applications-${new Date().toISOString().slice(0,10)}.csv`; link.click(); URL.revokeObjectURL(url);
 });

@@ -88,6 +88,7 @@ export class FileStore {
           source: 'legacy-import',
           confirmationStatus: 'not-applicable',
           internalNotificationStatus: 'not-applicable',
+          acceptanceStatus: 'not-applicable',
           participationEndedAt: null,
           submittedAt: entry.submittedAt || new Date().toISOString(),
           updatedAt: entry.submittedAt || new Date().toISOString()
@@ -112,6 +113,9 @@ export class FileStore {
         application.learningGoals ??= '';
       }
       state.schemaVersion = 2;
+    }
+    for (const application of state.applications) {
+      application.acceptanceStatus ??= 'not-applicable';
     }
     return state;
   }
@@ -250,6 +254,7 @@ export class FileStore {
         source: record.source,
         confirmationStatus: 'pending',
         internalNotificationStatus: 'pending',
+        acceptanceStatus: 'not-applicable',
         participationEndedAt: null,
         submittedAt: record.submittedAt,
         updatedAt: record.submittedAt
@@ -327,6 +332,9 @@ export class FileStore {
         }
       }
       application.status = status;
+      if (status === 'accepted' && application.acceptanceStatus !== 'sent') {
+        application.acceptanceStatus = 'pending';
+      }
       if (status === 'completed' && !application.participationEndedAt) {
         application.participationEndedAt = new Date().toISOString();
       } else if (status !== 'completed') {
@@ -338,7 +346,7 @@ export class FileStore {
   }
 
   async updateNotificationStatus(id, field, status) {
-    const allowed = new Set(['confirmationStatus', 'internalNotificationStatus']);
+    const allowed = new Set(['confirmationStatus', 'internalNotificationStatus', 'acceptanceStatus']);
     if (!allowed.has(field)) throw new Error('Unsupported notification field.');
     return this.mutate(state => {
       const application = state.applications.find(item => item.id === id);
@@ -411,15 +419,17 @@ export class FileStore {
     const byLevel = {};
     const byCohort = {};
     const confirmation = {};
+    const acceptance = {};
     for (const application of state.applications) {
       byStatus[application.status] = (byStatus[application.status] || 0) + 1;
       byLevel[application.level] = (byLevel[application.level] || 0) + 1;
       const cohort = state.cohorts.find(item => item.id === application.cohortId);
       if (cohort) byCohort[cohort.slug] = (byCohort[cohort.slug] || 0) + 1;
       confirmation[application.confirmationStatus] = (confirmation[application.confirmationStatus] || 0) + 1;
+      acceptance[application.acceptanceStatus] = (acceptance[application.acceptanceStatus] || 0) + 1;
     }
     for (const cohort of state.cohorts) byCohort[cohort.slug] ??= 0;
-    return { total: state.applications.length, byStatus, byLevel, byCohort, confirmation };
+    return { total: state.applications.length, byStatus, byLevel, byCohort, confirmation, acceptance };
   }
 
   async purgeExpiredRecords({ now = new Date(), unsuccessfulMonths, enrolledMonths }) {

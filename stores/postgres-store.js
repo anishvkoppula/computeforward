@@ -42,6 +42,7 @@ function mapApplication(row) {
     source: row.source,
     confirmationStatus: row.confirmation_status,
     internalNotificationStatus: row.internal_notification_status,
+    acceptanceStatus: row.acceptance_status,
     participationEndedAt: row.participation_ended_at,
     submittedAt: row.submitted_at,
     updatedAt: row.updated_at,
@@ -309,6 +310,10 @@ export class PostgresStore {
       }
       await client.query(`
         UPDATE applications SET status=$2,
+          acceptance_status=CASE
+            WHEN $2='accepted' AND acceptance_status <> 'sent' THEN 'pending'
+            ELSE acceptance_status
+          END,
           participation_ended_at=CASE
             WHEN $2='completed' THEN COALESCE(participation_ended_at, now())
             ELSE NULL
@@ -328,7 +333,8 @@ export class PostgresStore {
   async updateNotificationStatus(id, field, status) {
     const columns = {
       confirmationStatus: 'confirmation_status',
-      internalNotificationStatus: 'internal_notification_status'
+      internalNotificationStatus: 'internal_notification_status',
+      acceptanceStatus: 'acceptance_status'
     };
     const column = columns[field];
     if (!column) throw new Error('Unsupported notification field.');
@@ -402,20 +408,22 @@ export class PostgresStore {
   }
 
   async metrics() {
-    const [total, statuses, levels, cohorts, confirmations] = await Promise.all([
+    const [total, statuses, levels, cohorts, confirmations, acceptances] = await Promise.all([
       this.pool.query('SELECT count(*)::int AS count FROM applications'),
       this.pool.query('SELECT status, count(*)::int AS count FROM applications GROUP BY status'),
       this.pool.query('SELECT level, count(*)::int AS count FROM applications GROUP BY level'),
       this.pool.query(`SELECT c.slug, count(a.id)::int AS count FROM cohorts c
         LEFT JOIN applications a ON a.cohort_id=c.id GROUP BY c.slug`),
-      this.pool.query('SELECT confirmation_status, count(*)::int AS count FROM applications GROUP BY confirmation_status')
+      this.pool.query('SELECT confirmation_status, count(*)::int AS count FROM applications GROUP BY confirmation_status'),
+      this.pool.query('SELECT acceptance_status, count(*)::int AS count FROM applications GROUP BY acceptance_status')
     ]);
     return {
       total: total.rows[0].count,
       byStatus: Object.fromEntries(statuses.rows.map(row => [row.status, row.count])),
       byLevel: Object.fromEntries(levels.rows.map(row => [row.level, row.count])),
       byCohort: Object.fromEntries(cohorts.rows.map(row => [row.slug, row.count])),
-      confirmation: Object.fromEntries(confirmations.rows.map(row => [row.confirmation_status, row.count]))
+      confirmation: Object.fromEntries(confirmations.rows.map(row => [row.confirmation_status, row.count])),
+      acceptance: Object.fromEntries(acceptances.rows.map(row => [row.acceptance_status, row.count]))
     };
   }
 

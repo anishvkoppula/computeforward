@@ -335,6 +335,36 @@ export function createApp({ store, mailer, config }) {
     await store.recordAudit({ actor: 'admin', action: 'confirmation_resent', targetType: 'application', targetId: id, requestId: req.requestId });
     res.json({ success: result.delivered, confirmationStatus: result.delivered ? 'sent' : 'failed' });
   }));
+  app.post('/api/admin/applications/:id/send-acceptance', verifyOrigin, asyncRoute(async (req, res) => {
+    const id = validateId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid application.' });
+    const application = await store.getApplication(id);
+    if (!application) return res.status(404).json({ success: false, error: 'Application not found.' });
+    if (application.status !== 'accepted') {
+      return res.status(409).json({
+        success: false,
+        error: 'Mark the application as accepted before sending an acceptance email.',
+        code: 'ACCEPTANCE_REQUIRES_ACCEPTED_STATUS'
+      });
+    }
+
+    try {
+      const result = await mailer.sendAcceptanceNotification(application);
+      const acceptanceStatus = result.delivered ? 'sent' : 'failed';
+      await store.updateNotificationStatus(id, 'acceptanceStatus', acceptanceStatus);
+      if (!result.delivered) {
+        await store.recordAudit({ actor: 'admin', action: 'acceptance_email_failed', targetType: 'application', targetId: id, requestId: req.requestId });
+        return res.status(502).json({ success: false, error: 'The acceptance email could not be delivered. Check email settings and try again.', acceptanceStatus });
+      }
+      await store.recordAudit({ actor: 'admin', action: 'acceptance_email_sent', targetType: 'application', targetId: id, requestId: req.requestId });
+      res.json({ success: true, acceptanceStatus });
+    } catch {
+      await store.updateNotificationStatus(id, 'acceptanceStatus', 'failed');
+      await store.recordAudit({ actor: 'admin', action: 'acceptance_email_failed', targetType: 'application', targetId: id, requestId: req.requestId });
+      await alertOperations(config, 'acceptance_email_failed', { requestId: req.requestId, code: 'SMTP_DELIVERY_FAILED' });
+      return res.status(502).json({ success: false, error: 'The acceptance email could not be delivered. Check email settings and try again.', acceptanceStatus: 'failed' });
+    }
+  }));
   app.get('/api/admin/deletion-requests', asyncRoute(async (_req, res) => {
     res.setHeader('cache-control', 'no-store');
     res.json({ success: true, requests: await store.listDeletionRequests() });

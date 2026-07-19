@@ -13,6 +13,7 @@ let server;
 let baseUrl;
 let tempDir;
 let deletionToken;
+let acceptanceNotifications = 0;
 
 const testConfig = {
   ...baseConfig,
@@ -31,6 +32,7 @@ const mailer = {
   configured: true,
   async sendApplicationConfirmation() { return { delivered: true }; },
   async sendAdmissionsNotification() { return { delivered: true }; },
+  async sendAcceptanceNotification() { acceptanceNotifications += 1; return { delivered: true }; },
   async sendDeletionConfirmation(_email, token) { deletionToken = token; return { delivered: true }; },
   async sendDeletionComplete() { return { delivered: true }; }
 };
@@ -267,6 +269,40 @@ test('allows authorized status changes and records metrics', async () => {
   const metricBody = await metrics.json();
   assert.equal(metricBody.metrics.byStatus.reviewing, 1);
   assert.equal(metricBody.metrics.byCohort['interest-2026'], 2);
+});
+
+test('acceptance email requires accepted status and records successful delivery', async () => {
+  const applications = await store.listApplications();
+  const target = applications.find(application => application.status === 'reviewing');
+  const notAccepted = applications.find(application => application.id !== target.id);
+
+  const blocked = await request(`/api/admin/applications/${notAccepted.id}/send-acceptance`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-admin-token': testConfig.adminToken },
+    body: '{}'
+  });
+  assert.equal(blocked.status, 409);
+  assert.equal((await blocked.json()).code, 'ACCEPTANCE_REQUIRES_ACCEPTED_STATUS');
+
+  const accepted = await request(`/api/admin/applications/${target.id}/status`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', 'x-admin-token': testConfig.adminToken },
+    body: JSON.stringify({ status: 'accepted' })
+  });
+  assert.equal(accepted.status, 200);
+  assert.equal((await accepted.json()).application.acceptanceStatus, 'pending');
+
+  const sent = await request(`/api/admin/applications/${target.id}/send-acceptance`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-admin-token': testConfig.adminToken },
+    body: '{}'
+  });
+  assert.equal(sent.status, 200);
+  assert.equal((await sent.json()).acceptanceStatus, 'sent');
+  assert.equal(acceptanceNotifications, 1);
+  assert.equal((await store.getApplication(target.id)).acceptanceStatus, 'sent');
+  const state = await store.read();
+  assert.ok(state.auditEvents.some(event => event.action === 'acceptance_email_sent' && event.targetId === target.id));
 });
 
 test('admin can permanently delete one application and its orphaned personal records', async () => {

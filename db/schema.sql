@@ -75,6 +75,9 @@ CREATE TABLE IF NOT EXISTS applications (
   internal_notification_status text NOT NULL DEFAULT 'pending' CHECK (
     internal_notification_status IN ('pending', 'sent', 'failed', 'not-applicable')
   ),
+  acceptance_status text NOT NULL DEFAULT 'not-applicable' CHECK (
+    acceptance_status IN ('pending', 'sent', 'failed', 'not-applicable')
+  ),
   participation_ended_at timestamptz,
   submitted_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -89,6 +92,8 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS project_experience text NOT NU
   CHECK (char_length(project_experience) <= 600);
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS learning_goals text NOT NULL DEFAULT ''
   CHECK (char_length(learning_goals) <= 600);
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS acceptance_status text NOT NULL DEFAULT 'not-applicable'
+  CHECK (acceptance_status IN ('pending', 'sent', 'failed', 'not-applicable'));
 
 CREATE UNIQUE INDEX IF NOT EXISTS active_application_unique_idx
   ON applications (applicant_id, cohort_id, level)

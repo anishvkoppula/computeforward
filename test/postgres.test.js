@@ -70,7 +70,10 @@ test('PostgreSQL adapter persists, de-duplicates without overwrite, and supports
 test('PostgreSQL adapter enforces cohort capacity during status changes', async () => {
   await store.pool.query("UPDATE cohorts SET seat_limit=1 WHERE slug='interest-2026'");
   const applications = await store.listApplications();
-  await store.updateApplicationStatus(applications[0].id, 'accepted');
+  const accepted = await store.updateApplicationStatus(applications[0].id, 'accepted');
+  assert.equal(accepted.acceptanceStatus, 'pending');
+  const emailed = await store.updateNotificationStatus(applications[0].id, 'acceptanceStatus', 'sent');
+  assert.equal(emailed.acceptanceStatus, 'sent');
   await assert.rejects(
     store.updateApplicationStatus(applications[1].id, 'accepted'),
     error => error.code === 'COHORT_CAPACITY_REACHED'

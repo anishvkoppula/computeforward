@@ -112,18 +112,41 @@ test('admin login stays legible, protects the token, and reports startup failure
   expect(await page.evaluate(() => localStorage.getItem('cf_admin_token'))).toBeNull();
   expect(await page.evaluate(() => sessionStorage.getItem('cf_admin_token'))).toBeTruthy();
 
+  let deleteRequests = 0;
+  let acceptanceRequests = 0;
+  await page.route('**/api/admin/applications/**', route => {
+    if (route.request().url().endsWith('/send-acceptance')) {
+      acceptanceRequests += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, acceptanceStatus: 'sent' })
+      });
+    }
+    if (route.request().method() === 'DELETE') {
+      deleteRequests += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, deleted: { reference: 'CF-E2E-DELETE' } })
+      });
+    }
+    return route.continue();
+  });
+
+  await page.locator('[data-application-rows] select').first().selectOption('accepted');
+  const acceptanceButton = page.getByRole('button', { name: 'Send acceptance', exact: true }).first();
+  await expect(acceptanceButton).toBeVisible();
+  page.once('dialog', async dialog => {
+    expect(dialog.message()).toContain('scheduled cohort seat');
+    await dialog.accept();
+  });
+  await acceptanceButton.click();
+  await expect(page.locator('[data-dashboard-status]')).toContainText('Acceptance email sent');
+  expect(acceptanceRequests).toBe(1);
+
   const deleteButton = page.getByRole('button', { name: 'Delete permanently' }).first();
   await expect(deleteButton).toBeVisible();
-  let deleteRequests = 0;
-  await page.route('**/api/admin/applications/*', route => {
-    if (route.request().method() !== 'DELETE') return route.continue();
-    deleteRequests += 1;
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, deleted: { reference: 'CF-E2E-DELETE' } })
-    });
-  });
 
   page.once('dialog', async dialog => {
     expect(dialog.message()).toContain('cannot be undone');
@@ -141,7 +164,7 @@ test('admin login stays legible, protects the token, and reports startup failure
   await page.route('**/api/admin/metrics', route => route.fulfill({
     status: 503,
     contentType: 'application/json',
-    body: JSON.stringify({ error: { message: 'Function startup failed.' } })
+    body: JSON.stringify({ error: { message: 'Function startup failed.' }, code: 'SERVICE_UNAVAILABLE' })
   }));
   await page.fill('#admin-token', 'admin-token-that-is-longer-than-thirty-two-characters');
   await page.getByRole('button', { name: 'Open dashboard' }).click();

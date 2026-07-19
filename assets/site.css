@@ -135,6 +135,8 @@ button { cursor: pointer; }
 .button-primary { background: var(--orange); color: #06121f; }
 .button-primary:hover { color: #fff; background: var(--orange-dark); }
 .button-secondary { background: var(--surface); color: var(--ink); }
+.button-success { background: var(--teal); color: #fff; }
+.button-success:hover { background: #004f54; color: #fff; }
 .button-danger { background: var(--danger); color: #fff; }
 .button-danger:hover { background: #7f201a; color: #fff; }
 .button-small { min-height: 38px; padding: .45rem .75rem; box-shadow: 2px 2px 0 var(--ink); }
@@ -379,6 +381,7 @@ h3 { margin: 0 0 .65rem; font-size: 1.45rem; letter-spacing: -.025em; }
 .cohort-ledger-item h3 { min-height: 2.2em; margin: 0 0 .8rem; font-size: 1rem; }
 .cohort-ledger-item strong { display: block; font: 800 2rem var(--mono); }
 .cohort-ledger-item span { color: var(--ink-soft); font-size: .76rem; }
+.admin-workflow-note { max-width: 920px; margin: 1rem 0; }
 .table-wrap { overflow: auto; border: 1px solid var(--line); background: var(--surface); }
 table { width: 100%; border-collapse: collapse; font-size: .78rem; }
 th, td { padding: .72rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -390,7 +393,14 @@ td select { min-width: 120px; padding: .35rem; }
 .application-details dl { margin: .8rem 0 0; }
 .application-details dt { margin-top: .7rem; font: 800 .65rem var(--mono); text-transform: uppercase; color: var(--ink-soft); }
 .application-details dd { margin: .15rem 0 0; white-space: normal; line-height: 1.45; }
-.application-actions { min-width: 155px; }
+.email-status-list { min-width: 105px; margin: 0; }
+.email-status-list dt { color: var(--ink-soft); font: 800 .6rem var(--mono); text-transform: uppercase; }
+.email-status-list dd { margin: .05rem 0 .55rem; font-weight: 800; }
+.email-status-list dd:last-child { margin-bottom: 0; }
+.email-status-list [data-email-state="sent"] { color: var(--success); }
+.email-status-list [data-email-state="failed"] { color: var(--danger); }
+.email-status-list [data-email-state="pending"] { color: var(--orange-dark); }
+.application-actions { min-width: 175px; }
 .application-actions .button { width: 100%; margin-bottom: .55rem; white-space: nowrap; }
 .application-actions .button:last-child { margin-bottom: 0; }
 .badge { display: inline-block; padding: .2rem .4rem; border: 1px solid currentColor; font: 800 .65rem var(--mono); }

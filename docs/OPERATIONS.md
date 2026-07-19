@@ -6,10 +6,11 @@ Last updated: 2026-07-17
 
 1. Open `/admin` on a trusted device and enter the token from the secret manager.
 2. Review new `submitted` applications without downloading data unless an export is operationally necessary.
-3. Change the status to `reviewing`, then `contacted`, and record the response outside the public website only in an approved system.
-4. Use the confirmation retry action for `failed` email records after checking SMTP status.
-5. Aim to respond within 48 hours. If the commitment cannot be maintained, change the public copy before accepting more applications.
-6. Lock the dashboard when finished; closing the tab clears its session token.
+3. Change the status to `reviewing`, then `contacted`. A status change alone never sends an email.
+4. For an accepted application, set the status to `accepted`, use **Send acceptance**, confirm the recipients, and verify the acceptance email status becomes `sent`.
+5. Use **Resend receipt** for failed application receipts after checking SMTP status.
+6. Aim to respond within 48 hours. If the commitment cannot be maintained, change the public copy before accepting more applications.
+7. Lock the dashboard when finished; closing the tab clears its session token.
 
 The dashboard's **Delete permanently** action is for confirmed test, spam, duplicate, or otherwise unnecessary individual applications. Read the confirmation carefully: the application and consent are erased immediately, and an applicant contact record is also erased when it has no other applications. This action cannot be undone. For a student or guardian privacy request, use the verified email-deletion workflow below so the request has the proper confirmation record.
 
